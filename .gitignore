@@ -10,7 +10,7 @@
 kafka_2.13-2.6.0/
 
 # IntelliJ
-target/
+
 out/
 .idea/
 .idea_modules/
