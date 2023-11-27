@@ -1,4 +1,4 @@
-package it.polimi.nsds.kafka.front_end;
+package it.polimi.nsds.kafka.FrontEnd;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -12,6 +12,7 @@ import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.Properties;
 import java.util.Scanner;
 
@@ -35,6 +36,7 @@ public class ClientInterface {
         propsCons.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
 
         consumer = new KafkaConsumer<>(propsCons);
+        consumer.subscribe(Collections.singletonList("users"));
 
         final Properties propsProd = new Properties();
         propsProd.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
@@ -74,8 +76,8 @@ public class ClientInterface {
     }
 
     private static void adminPage(){
-        System.out.println("ADMIN Page:\n\n");
-        System.out.println("Please press one of the following commands:\n");
+        System.out.println("ADMIN Page:\n");
+        System.out.println("Please press one of the following commands:");
         System.out.println("ADD\nREMOVE\nHOME\n");
         boolean exit = false;
         while(!exit){
@@ -88,7 +90,57 @@ public class ClientInterface {
                     removeCourse();
                     break;
                 case "HOME":
-                    homePage();
+                    exit = true;
+                    break;
+                default:
+                    System.out.println("Not a valid command:\n");
+                    break;
+            }
+        }
+    }
+
+    private static void studentPage(){
+        System.out.println("STUDENT Page:\n");
+        System.out.println("Please press one of the following commands:");
+        System.out.println("ENROLL\nSUBMIT\nCHECK\nHOME\n");
+        boolean exit = false;
+        while(!exit){
+            String command = in.nextLine().toUpperCase();
+            switch(command) {
+                case "ENROLL":
+                    enrollCourse();
+                    break;
+                case "SUBMIT":
+                    submitSolution();
+                    break;
+                case "CHECK":
+                    checkSubmission();
+                    break;
+                case "HOME":
+                    exit = true;
+                    break;
+                default:
+                    System.out.println("Not a valid command:\n");
+                    break;
+            }
+        }
+    }
+
+    private static void professorPage(){
+        System.out.println("PROFESSOR Page:\n");
+        System.out.println("Please press one of the following commands:");
+        System.out.println("POST\nGRADE\nHOME\n");
+        boolean exit = false;
+        while(!exit){
+            String command = in.nextLine().toUpperCase();
+            switch(command) {
+                case "POST":
+                    postProject();
+                    break;
+                case "GRADE":
+                    gradeSolution();
+                    break;
+                case "HOME":
                     exit = true;
                     break;
                 default:
@@ -108,7 +160,7 @@ public class ClientInterface {
         while(!valid) {
             username = in.nextLine();
 
-            final ConsumerRecords<String, String> users = consumer.poll(Duration.of(5, ChronoUnit.MINUTES));
+            final ConsumerRecords<String, String> users = consumer.poll(Duration.of(1, ChronoUnit.SECONDS));
             boolean alreadyExists = false;
             for (final ConsumerRecord<String, String> user : users) {
                 if (username.equals(user.key())) {
@@ -161,6 +213,26 @@ public class ClientInterface {
     }
 
     private static void removeCourse(){
+
+    }
+
+    private static void enrollCourse(){
+
+    }
+
+    private static void submitSolution(){
+
+    }
+
+    private static void checkSubmission(){
+
+    }
+
+    private static void postProject(){
+
+    }
+
+    private static void gradeSolution(){
 
     }
 }
