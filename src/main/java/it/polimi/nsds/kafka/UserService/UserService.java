@@ -39,4 +39,25 @@ public class UserService {
         userProducer.send(newUser);
         return "User " + username + " registered";
     }
+
+    public String authenticateUser(String user) {
+        String[] par = user.split(" ");
+        String username = par[0];
+        String password = par[1];
+    
+        if (db_users.containsKey(username)) {
+            String storedCredentials = db_users.get(username);
+            String[] storedPar = storedCredentials.split(" ");
+            String storedPassword = storedPar[0];
+            String role = storedPar[1];
+    
+            if (password.equals(storedPassword)) {
+                return "LOGIN_SUCCESS";
+            } else {
+                return "Incorrect password";
+            }
+        } else {
+            return "User not found";
+        }
+    }
 }

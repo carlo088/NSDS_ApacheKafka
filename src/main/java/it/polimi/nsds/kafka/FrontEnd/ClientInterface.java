@@ -212,8 +212,42 @@ public class ClientInterface {
         System.out.println(receive());
     }
 
-    private static void login(){
+    private static void login() throws IOException, ClassNotFoundException{
+        String username = null;
+        String password = null;
+        
+        System.out.println("Insert your username:");
+        boolean valid = false;
+        while (!valid) {
+            username = input.nextLine();
+            if (username.contains(" ") || username.length() == 0) {
+                System.out.println("Invalid username");
+            } else {
+                valid = true;
+            }
+        }
 
+        System.out.println("Insert your password:");
+        valid = false;
+        while (!valid) {
+            password = input.nextLine();
+            if (password.contains(" ") || password.length() == 0) {
+                System.out.println("Invalid password");
+            } else {
+                valid = true;
+            }
+        }
+
+        send("LOGIN" + " " + username + " " + password);
+        String response = receive();
+
+        if (response.equals("LOGIN_SUCCESS")) {
+            System.out.println("Login successful!");
+            // effettuare login
+            studentPage();
+        } else {
+            System.out.println("Login failed. Please check your username and password.");
+        }
     }
 
     private static void addCourse(){

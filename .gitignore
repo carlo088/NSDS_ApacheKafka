@@ -17,3 +17,6 @@ out/
 *.iml
 *.ipr
 *.iws
+
+# VScode
+.vscode

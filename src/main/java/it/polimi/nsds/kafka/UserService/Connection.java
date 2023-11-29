@@ -76,6 +76,10 @@ public class Connection implements Runnable{
                 String response = userService.newUser(values[1] + " " + values[2] + " " + values[3]);
                 send(response);
                 break;
+            case "LOGIN":
+                String loginResponse = userService.authenticateUser(values[1] + " " + values[2]);
+                send(loginResponse);
+                break;
             default:
                 send("");
                 break;
