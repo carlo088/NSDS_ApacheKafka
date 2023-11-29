@@ -2,7 +2,6 @@
 *.log
 *.DS_Store
 
-
 # Compiled class file
 *.class
 
@@ -16,3 +15,9 @@ out/
 *.iml
 *.ipr
 *.iws
+
+# /target
+target/
+
+# VSCode
+.vscode
