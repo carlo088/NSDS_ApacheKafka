@@ -51,9 +51,12 @@ public class UserService {
             String storedPassword = storedPar[0];
             String role = storedPar[1];
     
-            if (password.equals(storedPassword)) {
-                return "LOGIN_SUCCESS";
-            } else {
+            if (password.equals(storedPassword) && role.equals("STUDENT")) {
+                return "STUDENT_SUCCESS";
+            }else if(password.equals(storedPassword) && role.equals("PROFESSOR")){
+                return "PROFESSOR_SUCCESS";
+            }
+            else {
                 return "Incorrect password";
             }
         } else {

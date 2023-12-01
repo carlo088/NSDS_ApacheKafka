@@ -1,5 +1,6 @@
 package it.polimi.nsds.kafka.UserService;
 
+import it.polimi.nsds.kafka.ProjectService.ProjectService;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -13,12 +14,14 @@ public class Connection implements Runnable{
 
     // services
     private UserService userService;
+    private ProjectService projectService;
 
     private boolean isActive = true;
 
-    public Connection(Socket socket, UserService userService){
+    public Connection(Socket socket, UserService userService, ProjectService projectService){
         this.socket = socket;
         this.userService = userService;
+        this.projectService = projectService;
     }
 
     /**
@@ -77,8 +80,15 @@ public class Connection implements Runnable{
                 send(response);
                 break;
             case "LOGIN":
-                String loginResponse = userService.authenticateUser(values[1] + " " + values[2]);
-                send(loginResponse);
+                response = userService.authenticateUser(values[1] + " " + values[2]);
+                send(response);
+                break;
+            case "POST":
+                String buf = "";
+                for (int i = 3; i < values.length; i++)
+                    buf = buf + values[i];
+                response = projectService.newProject(values[1] + " " + values[2] + " " + buf);
+                send(response);
                 break;
             default:
                 send("");

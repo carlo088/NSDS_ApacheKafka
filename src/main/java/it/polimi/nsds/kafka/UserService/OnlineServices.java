@@ -1,5 +1,6 @@
 package it.polimi.nsds.kafka.UserService;
 
+import it.polimi.nsds.kafka.ProjectService.ProjectService;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -22,6 +23,7 @@ public class OnlineServices {
 
         //TODO: start all services here
         UserService userService = new UserService(new HashMap<>());
+        ProjectService projectService = new ProjectService(new HashMap<>());
 
         System.out.println("OnlineServices listening on port: " + port);
         while(true){
@@ -29,7 +31,7 @@ public class OnlineServices {
                 // accept a socket and run a thread for that client connection
                 Socket socket = serverSocket.accept();
                 //TODO: pass to connection the classes of services
-                Connection connection = new Connection(socket, userService);
+                Connection connection = new Connection(socket, userService, projectService);
                 executor.submit(connection);
                 System.out.println("New connection established");
             } catch (IOException e){

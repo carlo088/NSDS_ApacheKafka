@@ -144,7 +144,7 @@ public class ClientInterface {
         }
     }
 
-    private static void professorPage(){
+    private static void professorPage() throws IOException, ClassNotFoundException{
         System.out.println("PROFESSOR Page:\n");
         System.out.println("Please press one of the following commands:");
         System.out.println("POST\nGRADE\nHOME\n");
@@ -241,11 +241,14 @@ public class ClientInterface {
         send("LOGIN" + " " + username + " " + password);
         String response = receive();
 
-        if (response.equals("LOGIN_SUCCESS")) {
+        if (response.equals("STUDENT_SUCCESS")) {
             System.out.println("Login successful!");
-            // effettuare login
             studentPage();
-        } else {
+        }else if(response.equals("PROFESSOR_SUCCESS")){
+            System.out.println("Login successful!");
+            professorPage();
+        }
+         else {
             System.out.println("Login failed. Please check your username and password.");
         }
     }
@@ -270,8 +273,57 @@ public class ClientInterface {
 
     }
 
-    private static void postProject(){
+    private static void postProject()  throws IOException, ClassNotFoundException{
 
+        String courseID = null;
+        String projectID = null;
+        String desc = null;
+
+        boolean valid = false;
+        System.out.println("Insert the course ID");
+        while(!valid){
+            courseID = input.nextLine();
+
+            if (courseID.contains(" ") || courseID.length() == 0){
+                System.out.println("Invalid course ID, try again");
+            }
+            else {
+                valid = true;
+            }
+        }
+
+        valid = false;
+        System.out.println("Insert the project ID");
+        while (!valid){
+            projectID = input.nextLine();
+            
+            if (projectID.contains(" ") || projectID.length() == 0){
+                System.out.println("Invalid project ID, try again");
+            }
+            else {
+                valid = true;
+            }
+        }
+
+
+        System.out.println("Insert the project description");
+
+        valid = false;
+        while(!valid){
+            desc = input.nextLine();
+
+            if (desc.equals("")){
+                System.out.println("Invalid description, try again");
+            }else{
+                valid = true;
+            }
+        }
+
+        
+        send("POST" + " " + courseID + " " + projectID + " " + desc);
+        System.out.println(receive());
+       
+        professorPage();
     }
 
     private static void gradeSolution(){
