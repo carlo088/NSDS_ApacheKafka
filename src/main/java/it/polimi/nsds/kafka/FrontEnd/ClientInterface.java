@@ -351,7 +351,31 @@ public class ClientInterface {
 
     }
 
-    private static void enrollCourse(){
+    private static void enrollCourse() throws IOException, ClassNotFoundException {
+        System.out.println("Available courses:\n");
+        send("SHOW_COURSES");
+        String availableCourses = receive();
+
+        // Print available courses
+        System.out.println("Courses:");
+        System.out.println(availableCourses);
+        
+        System.out.println("Choose a course by entering its ID:");
+        String selectedCourseIDString = input.nextLine();
+
+        try {
+            int selectedCourseID = Integer.parseInt(selectedCourseIDString);
+            if (availableCourses.contains(String.valueOf(selectedCourseID))) {
+                send("ADD_ENROLL"+ " " + usernameSession + " " + selectedCourseID);
+                String enrollResponse = receive();
+                // print CourseService method output
+                System.out.println(enrollResponse);
+            } else {
+                System.out.println("Invalid course ID. Please try again.");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input. Please enter a valid integer for the course ID.");
+        }
 
     }
 

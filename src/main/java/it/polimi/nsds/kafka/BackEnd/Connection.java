@@ -106,6 +106,10 @@ public class Connection implements Runnable{
                 String addCourseResponse = courseService.newCourse(values[1]);
                 send(addCourseResponse);
                 break;
+            case "ADD_ENROLL":
+                String enrollResponse = courseService.enrollCourse(values[1], values[2]);
+                send(enrollResponse);
+                break;
             default:
                 send("");
                 break;
