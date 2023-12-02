@@ -30,4 +30,8 @@ public class User {
     public List<String> getCourseIds() {
         return courseIds;
     }
+
+    public void addCourse(String id){
+        courseIds.add(id);
+    }
 }

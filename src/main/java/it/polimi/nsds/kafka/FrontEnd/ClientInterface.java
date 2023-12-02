@@ -1,6 +1,7 @@
 package it.polimi.nsds.kafka.FrontEnd;
 
 import com.google.gson.Gson;
+import com.sun.source.tree.ArrayAccessTree;
 import it.polimi.nsds.kafka.Beans.Course;
 import it.polimi.nsds.kafka.Beans.User;
 
@@ -9,6 +10,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
 import static java.lang.Integer.parseInt;
@@ -104,10 +107,10 @@ public class ClientInterface {
 
     private static void adminPage() throws IOException, ClassNotFoundException {
         System.out.println("ADMIN Page:\n");
-        System.out.println("Please press one of the following commands:");
-        System.out.println("ADD\nREMOVE\nHOME\n");
         boolean exit = false;
         while(!exit){
+            System.out.println("Please press one of the following commands:");
+            System.out.println("ADD\nREMOVE\nHOME\n");
             String command = input.nextLine().toUpperCase();
             switch(command) {
                 case "ADD":
@@ -128,10 +131,10 @@ public class ClientInterface {
 
     private static void studentPage(){
         System.out.println("STUDENT Page:\n");
-        System.out.println("Please press one of the following commands:");
-        System.out.println("ENROLL\nSUBMIT\nCHECK\nHOME\n");
         boolean exit = false;
         while(!exit){
+            System.out.println("Please press one of the following commands:");
+            System.out.println("ENROLL\nSUBMIT\nCHECK\nHOME\n");
             String command = input.nextLine().toUpperCase();
             switch(command) {
                 case "ENROLL":
@@ -156,10 +159,10 @@ public class ClientInterface {
 
     private static void professorPage() throws IOException, ClassNotFoundException{
         System.out.println("PROFESSOR Page:\n");
-        System.out.println("Please press one of the following commands:");
-        System.out.println("POST\nGRADE\nHOME\n");
         boolean exit = false;
         while(!exit){
+            System.out.println("Please press one of the following commands:");
+            System.out.println("POST\nGRADE\nHOME\n");
             String command = input.nextLine().toUpperCase();
             switch(command) {
                 case "POST":
@@ -334,7 +337,7 @@ public class ClientInterface {
         }
 
         // create a bean Course and parse it to Json
-        Course course = new Course(-1, name, cfu, numberOfProjects, professor);
+        Course course = new Course(null, name, cfu, numberOfProjects, professor);
         Gson gson = new Gson();
         String courseJson = gson.toJson(course);
     
@@ -363,6 +366,17 @@ public class ClientInterface {
     private static void postProject()  throws IOException, ClassNotFoundException{
         System.out.println("Your courses:\n");
         send("SHOW_COURSES" + " " + usernameSession);
+        String response = receive();
+        List<String> courseIds = new ArrayList<>(Arrays.asList(response.split(" ")));
+
+        if(courseIds.isEmpty()){
+            System.out.println("There are no courses");
+            return;
+        }
+
+        for (String courseId: courseIds) {
+            System.out.println(courseId);
+        }
 
         String courseID = null;
         String projectID = null;
@@ -373,7 +387,7 @@ public class ClientInterface {
         while(!valid){
             courseID = input.nextLine();
 
-            if (courseID.contains(" ") || courseID.length() == 0){
+            if (!courseIds.contains(courseID)){
                 System.out.println("Invalid course ID, try again");
             }
             else {
@@ -411,8 +425,6 @@ public class ClientInterface {
         
         send("POST" + " " + courseID + " " + projectID + " " + desc);
         System.out.println(receive());
-       
-        professorPage();
     }
 
     private static void gradeSolution(){

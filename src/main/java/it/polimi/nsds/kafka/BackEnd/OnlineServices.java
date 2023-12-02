@@ -41,7 +41,7 @@ public class OnlineServices {
 
         // initialize all services, possibly recovering data from Kafka
         UserService userService = new UserService(recover("users"));
-        CourseService courseService = new CourseService(new HashMap<>());
+        CourseService courseService = new CourseService(recover("courses"));
         ProjectService projectService = new ProjectService(recover("projects"));
         RegistrationService registrationService = new RegistrationService();
 
@@ -60,6 +60,7 @@ public class OnlineServices {
     }
 
     private static Map<String, String> recover(String topic){
+        System.out.println("Recovering " + topic + "...");
         Map<String, String> db_recovered = new HashMap<>();
 
         recoverConsumer.subscribe(Collections.singletonList(topic));

@@ -1,13 +1,13 @@
 package it.polimi.nsds.kafka.Beans;
 
 public class Course {
-    private int id;
+    private String id;
     private final String name;
     private final int cfu;
     private final int projectNum;
     private final String professor;
 
-    public Course(int id, String name, int cfu, int projectNum, String professor) {
+    public Course(String id, String name, int cfu, int projectNum, String professor) {
         this.id = id;
         this.name = name;
         this.cfu = cfu;
@@ -15,11 +15,11 @@ public class Course {
         this.professor = professor;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id){
+    public void setId(String id){
         this.id = id;
     }
 

@@ -19,6 +19,8 @@ public class UserService {
     public UserService(Map<String, String> db_users) {
         this.db_users = db_users;
         userProducer = Utils.setProducer();
+        UserConsumer consumer = new UserConsumer(db_users);
+        consumer.start();
     }
 
     public String newUser(String userJson){
@@ -68,11 +70,11 @@ public class UserService {
 
             // get all courses
             List<String> courseIds = user.getCourseIds();
-            StringBuilder response = null;
+            String response = "";
             for (String course: courseIds) {
-                response.append(course).append("\n");
+                response += (course + " ");
             }
-            return response.toString();
+            return response;
         } else {
             return "User not found";
         }
