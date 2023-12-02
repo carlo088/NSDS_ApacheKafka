@@ -90,6 +90,10 @@ public class Connection implements Runnable{
                 response = projectService.newProject(values[1] + " " + values[2] + " " + buf);
                 send(response);
                 break;
+            case "ADD":
+                String addCourseResponse = courseService.newCourse(values[1] + " " + Integer.parseInt(values[2]));
+                send(addCourseResponse);
+                break;
             default:
                 send("");
                 break;
