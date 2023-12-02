@@ -253,9 +253,43 @@ public class ClientInterface {
         }
     }
 
-    private static void addCourse(){
+    private static void addCourse() throws IOException, ClassNotFoundException {
+        String courseCode = null;
+        String numberOfProjects = null;
+    
+        System.out.println("Insert course code:");
+        boolean valid = false;
+        while (!valid) {
+            courseCode = input.nextLine();
+            if (courseCode.contains(" ") || courseCode.length() == 0) {
+                System.out.println("Invalid course code");
+            } else {
+                valid = true;
+            }
+        }
+    
+        System.out.println("Insert number of projects:");
+        valid = false;
+        while (!valid) {
+            numberOfProjects = input.nextLine();
+            try {
+                Integer.parseInt(numberOfProjects);
+                valid = true;
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a valid number for projects.");
+            }
+        }
+    
+        send("ADDCOURSE" + " " + courseCode + " " + numberOfProjects);
+        String response = receive();
 
+        if (response.equals("COURSE_ADDED_SUCCESS")) {
+            System.out.println("Course added successfully!");
+        } else {
+            System.out.println("Failed to add course. Please check your input.");
+        }
     }
+
 
     private static void removeCourse(){
 
