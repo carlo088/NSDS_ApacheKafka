@@ -1,5 +1,8 @@
 package it.polimi.nsds.kafka.FrontEnd;
 
+import com.google.gson.Gson;
+import it.polimi.nsds.kafka.Beans.User;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -31,7 +34,7 @@ public class ClientInterface {
             in = new ObjectInputStream(socket.getInputStream());
 
             // start showing the interface
-            receive();
+            System.out.println(receive());
             homePage();
 
         } catch (IOException | ClassNotFoundException e) {
@@ -58,7 +61,8 @@ public class ClientInterface {
     }
 
     /**
-     * receives and prints a response from back-end through the socket's input stream
+     * receives and returns a response from back-end through the socket's input stream
+     * @return string received
      * @throws IOException if there are IO problems
      * @throws ClassNotFoundException if there are problems with readObject() method
      */
@@ -168,7 +172,6 @@ public class ClientInterface {
         }
     }
 
-    //gli username sono univoci per studenti e professori indipendentemente dal ruolo
     private static void register() throws IOException, ClassNotFoundException {
         String username = null;
         String password = null;
@@ -208,7 +211,12 @@ public class ClientInterface {
                 System.out.println("Not a valid role");
         }
 
-        send("REGISTER" + " " + username + " " + password + " " + role);
+        // create a bean User and parse it to Json
+        User user = new User(username, password, role);
+        Gson gson = new Gson();
+        String userJson = gson.toJson(user);
+
+        send("REGISTER" + " " + userJson);
         System.out.println(receive());
     }
 
@@ -238,7 +246,12 @@ public class ClientInterface {
             }
         }
 
-        send("LOGIN" + " " + username + " " + password);
+        // create a bean User and parse it to Json
+        User user = new User(username, password, null);
+        Gson gson = new Gson();
+        String userJson = gson.toJson(user);
+
+        send("LOGIN" + " " + userJson);
         String response = receive();
 
         if (response.equals("STUDENT_SUCCESS")) {

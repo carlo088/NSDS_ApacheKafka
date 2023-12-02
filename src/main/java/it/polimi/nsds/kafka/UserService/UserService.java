@@ -1,59 +1,52 @@
 package it.polimi.nsds.kafka.UserService;
 
+import com.google.gson.Gson;
+import it.polimi.nsds.kafka.Beans.User;
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.util.Map;
-import java.util.Properties;
 
 public class UserService {
-    private static Map<String, String> db_users;
+    // users stored in a private data structure
+    private final Map<String, String> db_users;
 
     // kafka producer
-    private KafkaProducer<String, String> userProducer = null;
+    private final KafkaProducer<String, String> userProducer;
 
     public UserService(Map<String, String> db_users) {
         this.db_users = db_users;
-        final Properties propsProd = new Properties();
-        propsProd.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        propsProd.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        propsProd.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-
-        userProducer = new KafkaProducer<>(propsProd);
-
+        userProducer = Utils.setProducer();
     }
 
-    public String newUser(String user){
-        String[] par = user.split(" ");
-        String username = par[0];
-        String password = par[1];
-        String role = par[2];
+    public String newUser(String userJson){
+        // get a User class from a Json file
+        Gson gson = new Gson();
+        User user = gson.fromJson(userJson, User.class);
 
-        if (db_users.containsKey(username))
+        if (db_users.containsKey(user.getUsername()))
             return "Username already exists";
 
-        db_users.put(username, password + " " + role);
-        final ProducerRecord<String, String> newUser = new ProducerRecord<>("users", username, password + " " + role);
+        // publish the record
+        db_users.put(user.getUsername(), userJson);
+        final ProducerRecord<String, String> newUser = new ProducerRecord<>("users", user.getUsername(), userJson);
         userProducer.send(newUser);
-        return "User " + username + " registered";
+        return "User " + user.getUsername() + " registered";
     }
 
-    public String authenticateUser(String user) {
-        String[] par = user.split(" ");
-        String username = par[0];
-        String password = par[1];
+    public String authenticateUser(String userJson) {
+        // get a User class from a Json file
+        Gson gson = new Gson();
+        User user = gson.fromJson(userJson, User.class);
     
-        if (db_users.containsKey(username)) {
-            String storedCredentials = db_users.get(username);
-            String[] storedPar = storedCredentials.split(" ");
-            String storedPassword = storedPar[0];
-            String role = storedPar[1];
+        if (db_users.containsKey(user.getUsername())) {
+            // get stored user
+            String storedCredentials = db_users.get(user.getUsername());
+            User storedUser = gson.fromJson(storedCredentials, User.class);
     
-            if (password.equals(storedPassword) && role.equals("STUDENT")) {
+            if (user.getPassword().equals(storedUser.getPassword()) && storedUser.getRole().equals("STUDENT")) {
                 return "STUDENT_SUCCESS";
-            }else if(password.equals(storedPassword) && role.equals("PROFESSOR")){
+            }else if(user.getPassword().equals(storedUser.getPassword()) && storedUser.getRole().equals("PROFESSOR")){
                 return "PROFESSOR_SUCCESS";
             }
             else {

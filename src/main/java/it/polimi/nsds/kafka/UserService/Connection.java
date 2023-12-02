@@ -13,8 +13,8 @@ public class Connection implements Runnable{
     private ObjectOutputStream out;
 
     // services
-    private UserService userService;
-    private ProjectService projectService;
+    private final UserService userService;
+    private final ProjectService projectService;
 
     private boolean isActive = true;
 
@@ -76,11 +76,11 @@ public class Connection implements Runnable{
 
         switch(requestType){
             case "REGISTER" :
-                String response = userService.newUser(values[1] + " " + values[2] + " " + values[3]);
+                String response = userService.newUser(values[1]);
                 send(response);
                 break;
             case "LOGIN":
-                response = userService.authenticateUser(values[1] + " " + values[2]);
+                response = userService.authenticateUser(values[1]);
                 send(response);
                 break;
             case "POST":
