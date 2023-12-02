@@ -1,4 +1,4 @@
-package it.polimi.nsds.kafka.UserService;
+package it.polimi.nsds.kafka;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;

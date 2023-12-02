@@ -1,12 +1,14 @@
 package it.polimi.nsds.kafka.FrontEnd;
 
 import com.google.gson.Gson;
+import it.polimi.nsds.kafka.Beans.Course;
 import it.polimi.nsds.kafka.Beans.User;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 import static java.lang.Integer.parseInt;
@@ -18,6 +20,9 @@ public class ClientInterface {
 
     // scanner for stdin input
     private static Scanner input;
+
+    // user session
+    private static String usernameSession = null;
 
     public static void main(String[] args) throws IOException{
         // if there are arguments use for ip and port of socket connection, otherwise set the default
@@ -97,7 +102,7 @@ public class ClientInterface {
         }
     }
 
-    private static void adminPage(){
+    private static void adminPage() throws IOException, ClassNotFoundException {
         System.out.println("ADMIN Page:\n");
         System.out.println("Please press one of the following commands:");
         System.out.println("ADD\nREMOVE\nHOME\n");
@@ -139,6 +144,7 @@ public class ClientInterface {
                     checkSubmission();
                     break;
                 case "HOME":
+                    usernameSession = null;
                     exit = true;
                     break;
                 default:
@@ -163,6 +169,7 @@ public class ClientInterface {
                     gradeSolution();
                     break;
                 case "HOME":
+                    usernameSession = null;
                     exit = true;
                     break;
                 default:
@@ -212,7 +219,7 @@ public class ClientInterface {
         }
 
         // create a bean User and parse it to Json
-        User user = new User(username, password, role);
+        User user = new User(username, password, role, new ArrayList<>());
         Gson gson = new Gson();
         String userJson = gson.toJson(user);
 
@@ -247,7 +254,7 @@ public class ClientInterface {
         }
 
         // create a bean User and parse it to Json
-        User user = new User(username, password, null);
+        User user = new User(username, password, null, null);
         Gson gson = new Gson();
         String userJson = gson.toJson(user);
 
@@ -256,9 +263,11 @@ public class ClientInterface {
 
         if (response.equals("STUDENT_SUCCESS")) {
             System.out.println("Login successful!");
+            usernameSession = username;
             studentPage();
         }else if(response.equals("PROFESSOR_SUCCESS")){
             System.out.println("Login successful!");
+            usernameSession = username;
             professorPage();
         }
          else {
@@ -267,40 +276,71 @@ public class ClientInterface {
     }
 
     private static void addCourse() throws IOException, ClassNotFoundException {
-        String courseCode = null;
-        String numberOfProjects = null;
+        String name = null;
+        int cfu = 0;
+        int numberOfProjects = 0;
+        String professor = null;
     
-        System.out.println("Insert course code:");
+        System.out.println("Insert the name of the course:");
         boolean valid = false;
         while (!valid) {
-            courseCode = input.nextLine();
-            if (courseCode.contains(" ") || courseCode.length() == 0) {
-                System.out.println("Invalid course code");
+            name = input.nextLine();
+            if (name.contains(" ") || name.length() == 0) {
+                System.out.println("Invalid name");
             } else {
                 valid = true;
+            }
+        }
+
+        System.out.println("Insert number of cfu:");
+        valid = false;
+        while (!valid) {
+            String cfuInput = input.nextLine();
+            try {
+                cfu = Integer.parseInt(cfuInput);
+                if(cfu > 0)
+                    valid = true;
+                else
+                    System.out.println("CFU must be more than zero");
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a valid number for projects.");
             }
         }
     
         System.out.println("Insert number of projects:");
         valid = false;
         while (!valid) {
-            numberOfProjects = input.nextLine();
+            String numberOfProjectsInput = input.nextLine();
             try {
-                Integer.parseInt(numberOfProjects);
-                valid = true;
+                numberOfProjects = Integer.parseInt(numberOfProjectsInput);
+                if(numberOfProjects > 0)
+                    valid = true;
+                else
+                    System.out.println("Number of projects must be more than zero");
             } catch (NumberFormatException e) {
                 System.out.println("Invalid input. Please enter a valid number for projects.");
             }
         }
-    
-        send("ADDCOURSE" + " " + courseCode + " " + numberOfProjects);
-        String response = receive();
 
-        if (response.equals("COURSE_ADDED_SUCCESS")) {
-            System.out.println("Course added successfully!");
-        } else {
-            System.out.println("Failed to add course. Please check your input.");
+        System.out.println("Insert the username of the professor:");
+        valid = false;
+        while (!valid) {
+            professor = input.nextLine();
+            if (professor.contains(" ") || professor.length() == 0) {
+                System.out.println("Invalid username");
+            } else {
+                valid = true;
+            }
         }
+
+        // create a bean Course and parse it to Json
+        Course course = new Course(-1, name, cfu, numberOfProjects, professor);
+        Gson gson = new Gson();
+        String courseJson = gson.toJson(course);
+    
+        send("ADD_COURSE" + " " + courseJson);
+        String response = receive();
+        System.out.println(response);
     }
 
 
@@ -321,6 +361,8 @@ public class ClientInterface {
     }
 
     private static void postProject()  throws IOException, ClassNotFoundException{
+        System.out.println("Your courses:\n");
+        send("SHOW_COURSES" + " " + usernameSession);
 
         String courseID = null;
         String projectID = null;

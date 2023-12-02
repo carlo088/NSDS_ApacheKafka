@@ -1,4 +1,4 @@
-package it.polimi.nsds.kafka.ProjectService;
+package it.polimi.nsds.kafka.BackEnd.Services;
 
 import java.util.Map;
 import java.util.Properties;

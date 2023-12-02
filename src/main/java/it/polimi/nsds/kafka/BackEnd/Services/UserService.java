@@ -1,10 +1,12 @@
-package it.polimi.nsds.kafka.UserService;
+package it.polimi.nsds.kafka.BackEnd.Services;
 
 import com.google.gson.Gson;
 import it.polimi.nsds.kafka.Beans.User;
+import it.polimi.nsds.kafka.Utils;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
+import java.util.List;
 import java.util.Map;
 
 public class UserService {
@@ -52,6 +54,25 @@ public class UserService {
             else {
                 return "Incorrect password";
             }
+        } else {
+            return "User not found";
+        }
+    }
+
+    public String showCourses(String username){
+        if (db_users.containsKey(username)) {
+            // get logged user
+            String userJson = db_users.get(username);
+            Gson gson = new Gson();
+            User user = gson.fromJson(userJson, User.class);
+
+            // get all courses
+            List<String> courseIds = user.getCourseIds();
+            StringBuilder response = null;
+            for (String course: courseIds) {
+                response.append(course).append("\n");
+            }
+            return response.toString();
         } else {
             return "User not found";
         }

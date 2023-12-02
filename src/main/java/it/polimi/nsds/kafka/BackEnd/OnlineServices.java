@@ -1,7 +1,10 @@
-package it.polimi.nsds.kafka.UserService;
+package it.polimi.nsds.kafka.BackEnd;
 
-import it.polimi.nsds.kafka.ProjectService.ProjectService;
-import it.polimi.nsds.kafka.RegistrationService.RegistrationService;
+import it.polimi.nsds.kafka.BackEnd.Services.CourseService;
+import it.polimi.nsds.kafka.BackEnd.Services.ProjectService;
+import it.polimi.nsds.kafka.BackEnd.Services.RegistrationService;
+import it.polimi.nsds.kafka.BackEnd.Services.UserService;
+import it.polimi.nsds.kafka.Utils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -36,19 +39,18 @@ public class OnlineServices {
         // initialize Kafka consumer used for recovering
         recoverConsumer = Utils.setConsumer();
 
-        // TODO: initialize all services, possibly recovering data from Kafka
+        // initialize all services, possibly recovering data from Kafka
         UserService userService = new UserService(recover("users"));
+        CourseService courseService = new CourseService(new HashMap<>());
         ProjectService projectService = new ProjectService(recover("projects"));
         RegistrationService registrationService = new RegistrationService();
-
 
         System.out.println("OnlineServices listening on port: " + port);
         while(true){
             try {
                 // accept a socket and run a thread for that client connection
                 Socket socket = serverSocket.accept();
-                //TODO: pass to connection the classes of services
-                Connection connection = new Connection(socket, userService, projectService);
+                Connection connection = new Connection(socket, userService, courseService, projectService, registrationService);
                 executor.submit(connection);
                 System.out.println("New connection established");
             } catch (IOException e){

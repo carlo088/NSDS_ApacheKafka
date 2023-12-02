@@ -1,6 +1,10 @@
-package it.polimi.nsds.kafka.UserService;
+package it.polimi.nsds.kafka.BackEnd;
 
-import it.polimi.nsds.kafka.ProjectService.ProjectService;
+import it.polimi.nsds.kafka.BackEnd.Services.CourseService;
+import it.polimi.nsds.kafka.BackEnd.Services.ProjectService;
+import it.polimi.nsds.kafka.BackEnd.Services.RegistrationService;
+import it.polimi.nsds.kafka.BackEnd.Services.UserService;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -14,14 +18,18 @@ public class Connection implements Runnable{
 
     // services
     private final UserService userService;
+    private final CourseService courseService;
     private final ProjectService projectService;
+    private final RegistrationService registrationService;
 
     private boolean isActive = true;
 
-    public Connection(Socket socket, UserService userService, ProjectService projectService){
+    public Connection(Socket socket, UserService userService, CourseService courseService, ProjectService projectService, RegistrationService registrationService){
         this.socket = socket;
         this.userService = userService;
+        this.courseService = courseService;
         this.projectService = projectService;
+        this.registrationService = registrationService;
     }
 
     /**
@@ -83,6 +91,10 @@ public class Connection implements Runnable{
                 response = userService.authenticateUser(values[1]);
                 send(response);
                 break;
+            case "SHOW_COURSES":
+                response = userService.showCourses(values[1]);
+                send(response);
+                break;
             case "POST":
                 String buf = "";
                 for (int i = 3; i < values.length; i++)
@@ -90,8 +102,8 @@ public class Connection implements Runnable{
                 response = projectService.newProject(values[1] + " " + values[2] + " " + buf);
                 send(response);
                 break;
-            case "ADD":
-                String addCourseResponse = courseService.newCourse(values[1] + " " + Integer.parseInt(values[2]));
+            case "ADD_COURSE":
+                String addCourseResponse = courseService.newCourse(values[1]);
                 send(addCourseResponse);
                 break;
             default:
