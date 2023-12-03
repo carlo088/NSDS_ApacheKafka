@@ -61,7 +61,18 @@ public class UserService {
         }
     }
 
-    public String showCourses(String username){
+    public String showProfessors(){
+        Gson gson = new Gson();
+        String response = "";
+        for (String userJson: db_users.values()) {
+            User user = gson.fromJson(userJson, User.class);
+            if(user.getRole().equals("PROFESSOR"))
+                response += (user.getUsername() + " ");
+        }
+        return response;
+    }
+
+    public String showUserCourses(String username){
         if (db_users.containsKey(username)) {
             // get logged user
             String userJson = db_users.get(username);
@@ -78,5 +89,36 @@ public class UserService {
         } else {
             return "User not found";
         }
+    }
+
+    public String enrollCourse(String username, String courseId) {
+        if (!db_users.containsKey(username))
+            return "User not found";
+
+        //FIXME: il controllo risulterebbe molto più complesso nel caso il corso venga eliminato durante una enroll
+        /*
+        if (!db_courses.containsKey(courseId))
+            return "Course not found";
+         */
+
+        // Load user from db_users
+        Gson gson = new Gson();
+        User user = gson.fromJson(db_users.get(username), User.class);
+
+        // if user isn't already enrolled, add the course
+        if (user.getCourseIds().contains(courseId))
+            return "User is already enrolled in course " + courseId;
+
+        user.addCourse(courseId);
+
+        // update the CourseService db_users value associated with the key username in the db_users map
+        db_users.put(username, gson.toJson(user));
+        String userJson = gson.toJson(user);
+        final ProducerRecord<String, String> newUser = new ProducerRecord<>("users", user.getUsername(), userJson);
+        userProducer.send(newUser);
+
+        // TODO Send record of new enrollment such that Registration service can pull it?
+
+        return "Enrolled in course " + courseId;
     }
 }

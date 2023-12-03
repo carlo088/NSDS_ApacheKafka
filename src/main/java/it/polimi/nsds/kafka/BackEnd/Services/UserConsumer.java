@@ -7,6 +7,8 @@ import it.polimi.nsds.kafka.Utils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -22,10 +24,13 @@ public class UserConsumer extends Thread{
     }
 
     public void run(){
+        final KafkaProducer<String, String> userProducer = Utils.setProducer();
+
         final KafkaConsumer<String, String> consumer = Utils.setConsumer();
         consumer.subscribe(Collections.singleton("courses"));
 
         while (true){
+            //FIXME: questo consumer deve costantemente aggiornare la lista di corsi, anche nel caso venga ne rimosso uno
             final ConsumerRecords<String, String> records = consumer.poll(Duration.of(10, ChronoUnit.SECONDS));
             for (final ConsumerRecord<String, String> record : records){
                 Gson gson = new Gson();
@@ -34,6 +39,11 @@ public class UserConsumer extends Thread{
                     User user = gson.fromJson(db_user.get(course.getProfessor()), User.class);
                     user.addCourse(course.getId());
                     db_user.put(course.getProfessor(), gson.toJson(user));
+
+                    // update Kafka record
+                    String userJson = gson.toJson(user);
+                    final ProducerRecord<String, String> newUser = new ProducerRecord<>("users", user.getUsername(), userJson);
+                    userProducer.send(newUser);
                 }
             }
         }

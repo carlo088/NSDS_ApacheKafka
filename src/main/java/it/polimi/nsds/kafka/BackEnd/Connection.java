@@ -91,24 +91,29 @@ public class Connection implements Runnable{
                 response = userService.authenticateUser(values[1]);
                 send(response);
                 break;
-            case "SHOW_COURSES":
-                response = userService.showCourses(values[1]);
+            case "SHOW_USER_COURSES":
+                response = userService.showUserCourses(values[1]);
                 send(response);
                 break;
             case "POST":
-                String buf = "";
-                for (int i = 3; i < values.length; i++)
-                    buf = buf + values[i];
-                response = projectService.newProject(values[1] + " " + values[2] + " " + buf);
+                response = projectService.newProject(values[1]);
+                send(response);
+                break;
+            case "SHOW_PROFESSORS":
+                response = userService.showProfessors();
                 send(response);
                 break;
             case "ADD_COURSE":
-                String addCourseResponse = courseService.newCourse(values[1]);
-                send(addCourseResponse);
+                response = courseService.newCourse(values[1]);
+                send(response);
                 break;
-            case "ADD_ENROLL":
-                String enrollResponse = courseService.enrollCourse(values[1], values[2]);
-                send(enrollResponse);
+            case "SHOW_ALL_COURSES":
+                response = courseService.showAllCourses();
+                send(response);
+                break;
+            case "ENROLL":
+                response = userService.enrollCourse(values[1], values[2]);
+                send(response);
                 break;
             default:
                 send("");

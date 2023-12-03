@@ -1,8 +1,8 @@
 package it.polimi.nsds.kafka.FrontEnd;
 
 import com.google.gson.Gson;
-import com.sun.source.tree.ArrayAccessTree;
 import it.polimi.nsds.kafka.Beans.Course;
+import it.polimi.nsds.kafka.Beans.Project;
 import it.polimi.nsds.kafka.Beans.User;
 
 import java.io.IOException;
@@ -32,7 +32,7 @@ public class ClientInterface {
         String ip = args.length > 0 ? args[1] : "127.0.0.1";
         int port = args.length > 1 ? parseInt(args[2]) : 7268;
 
-        // crate the stdin scanner
+        // create the stdin scanner
         input = new Scanner(System.in);
 
         try {
@@ -129,7 +129,7 @@ public class ClientInterface {
         }
     }
 
-    private static void studentPage(){
+    private static void studentPage() throws IOException, ClassNotFoundException {
         System.out.println("STUDENT Page:\n");
         boolean exit = false;
         while(!exit){
@@ -325,11 +325,25 @@ public class ClientInterface {
             }
         }
 
+        send("SHOW_PROFESSORS");
+        String response = receive();
+        List<String> professors = new ArrayList<>(Arrays.asList(response.split(" ")));
+        if (professors.isEmpty()){
+            System.out.println("There are no registered professors");
+            return;
+        }
+
+        System.out.println("Available professors: ");
+        for (String prof: professors) {
+            System.out.println(prof);
+        }
+
+
         System.out.println("Insert the username of the professor:");
         valid = false;
         while (!valid) {
             professor = input.nextLine();
-            if (professor.contains(" ") || professor.length() == 0) {
+            if (!professors.contains(professor)) {
                 System.out.println("Invalid username");
             } else {
                 valid = true;
@@ -342,8 +356,7 @@ public class ClientInterface {
         String courseJson = gson.toJson(course);
     
         send("ADD_COURSE" + " " + courseJson);
-        String response = receive();
-        System.out.println(response);
+        System.out.println(receive());
     }
 
 
@@ -352,31 +365,42 @@ public class ClientInterface {
     }
 
     private static void enrollCourse() throws IOException, ClassNotFoundException {
-        System.out.println("Available courses:\n");
-        send("SHOW_COURSES");
-        String availableCourses = receive();
+        send("SHOW_ALL_COURSES");
+        String response = receive();
+        List<String> availableCourses = new ArrayList<>(Arrays.asList(response.split(" ")));
 
-        // Print available courses
-        System.out.println("Courses:");
-        System.out.println(availableCourses);
-        
-        System.out.println("Choose a course by entering its ID:");
-        String selectedCourseIDString = input.nextLine();
-
-        try {
-            int selectedCourseID = Integer.parseInt(selectedCourseIDString);
-            if (availableCourses.contains(String.valueOf(selectedCourseID))) {
-                send("ADD_ENROLL"+ " " + usernameSession + " " + selectedCourseID);
-                String enrollResponse = receive();
-                // print CourseService method output
-                System.out.println(enrollResponse);
-            } else {
-                System.out.println("Invalid course ID. Please try again.");
-            }
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid input. Please enter a valid integer for the course ID.");
+        if (availableCourses.isEmpty()){
+            System.out.println("There are no available courses");
+            return;
         }
 
+        System.out.println("Available courses:\n");
+        List<String> availableIDs = new ArrayList<>();
+        Gson gson = new Gson();
+        for (String courseJson: availableCourses) {
+            Course course = gson.fromJson(courseJson, Course.class);
+            System.out.println("ID = " + course.getId() + " | NAME = " + course.getName() + " | CFU = " + course.getCfu() +
+                    " | #PROJECTS = " + course.getProjectNum() + " | PROF = " + course.getProfessor() + " |");
+
+            availableIDs.add(course.getId());
+        }
+        
+        System.out.println("Choose a course by entering its ID:");
+        String selectedCourseID = null;
+        boolean valid = false;
+        while(!valid){
+            selectedCourseID = input.nextLine();
+            if (!availableIDs.contains(selectedCourseID)) {
+                System.out.println("Invalid course ID. Please try again.");
+            } else {
+                valid = true;
+            }
+        }
+
+        send("ENROLL"+ " " + usernameSession + " " + selectedCourseID);
+        String enrollResponse = receive();
+        // print CourseService method output
+        System.out.println(enrollResponse);
     }
 
     private static void submitSolution(){
@@ -388,8 +412,7 @@ public class ClientInterface {
     }
 
     private static void postProject()  throws IOException, ClassNotFoundException{
-        System.out.println("Your courses:\n");
-        send("SHOW_COURSES" + " " + usernameSession);
+        send("SHOW_USER_COURSES" + " " + usernameSession);
         String response = receive();
         List<String> courseIds = new ArrayList<>(Arrays.asList(response.split(" ")));
 
@@ -398,12 +421,12 @@ public class ClientInterface {
             return;
         }
 
+        System.out.println("Available courses:\n");
         for (String courseId: courseIds) {
             System.out.println(courseId);
         }
 
         String courseID = null;
-        String projectID = null;
         String desc = null;
 
         boolean valid = false;
@@ -419,20 +442,6 @@ public class ClientInterface {
             }
         }
 
-        valid = false;
-        System.out.println("Insert the project ID");
-        while (!valid){
-            projectID = input.nextLine();
-            
-            if (projectID.contains(" ") || projectID.length() == 0){
-                System.out.println("Invalid project ID, try again");
-            }
-            else {
-                valid = true;
-            }
-        }
-
-
         System.out.println("Insert the project description");
 
         valid = false;
@@ -446,8 +455,11 @@ public class ClientInterface {
             }
         }
 
-        
-        send("POST" + " " + courseID + " " + projectID + " " + desc);
+        Project project = new Project(null, desc, courseID);
+        Gson gson = new Gson();
+        String projectJson = gson.toJson(project);
+
+        send("POST" + " " + projectJson);
         System.out.println(receive());
     }
 

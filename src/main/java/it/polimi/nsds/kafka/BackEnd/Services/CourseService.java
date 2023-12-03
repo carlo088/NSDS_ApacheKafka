@@ -7,8 +7,6 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 import java.util.Map;
-import java.util.List;
-import java.util.Properties;
 import java.util.Random;
 
 public class CourseService {
@@ -45,30 +43,12 @@ public class CourseService {
         return "Course added correctly";
     }
 
-    public String enrollCourse(String username, int courseId) {
-        if (!db_users.containsKey(username))
-            return "User not found";
-
-        if (!db_courses.containsKey(courseId))
-            return "Course not found";
-
-        // Load user from db_users
-        User user = gson.fromJson(db_users.get(username), User.class);
-        List<String> enrolledCourses = user.getCourseIds();
-
-        if (enrolledCourses.contains(String.valueOf(courseId)))
-            return "User is already enrolled in course " + courseId;
-
-        enrolledCourses.add(String.valueOf(courseId));
-
-        // update the CourseService db_users value associated with the key username in the db_users map
-        db_users.put(username, gson.toJson(user));
-
-        // TODO UserService: this method only updates the CourseService database, maybe one would also update the UserSerive db?
-
-        // TODO Send record of new enrollment such that Registration service can pull it?
-
-        return "Enrolled in course " + courseId;
+    public String showAllCourses(){
+        String response = "";
+        for (String courseJson: db_courses.values()) {
+            response += courseJson + " ";
+        }
+        return response;
     }
 
 }
