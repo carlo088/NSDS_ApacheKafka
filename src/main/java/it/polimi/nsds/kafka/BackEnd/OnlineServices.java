@@ -39,10 +39,15 @@ public class OnlineServices {
         // initialize Kafka consumer used for recovering
         recoverConsumer = Utils.setConsumer();
 
-        // initialize all services, possibly recovering data from Kafka
-        UserService userService = new UserService(recover("users"));
-        CourseService courseService = new CourseService(recover("courses"));
-        ProjectService projectService = new ProjectService(recover("projects"));
+        // recover data from Kafka records
+        Map<String, String> db_users = recover("users");
+        Map<String, String> db_courses = recover("courses");
+        Map<String, String> db_projects = recover("projects");
+
+        // initialize all services
+        UserService userService = new UserService(db_users);
+        CourseService courseService = new CourseService(db_courses);
+        ProjectService projectService = new ProjectService(db_projects);
         RegistrationService registrationService = new RegistrationService();
 
         System.out.println("OnlineServices listening on port: " + port);
@@ -64,7 +69,7 @@ public class OnlineServices {
         Map<String, String> db_recovered = new HashMap<>();
 
         recoverConsumer.subscribe(Collections.singletonList(topic));
-        final ConsumerRecords<String, String> records = recoverConsumer.poll(Duration.of(10, ChronoUnit.SECONDS));
+        final ConsumerRecords<String, String> records = recoverConsumer.poll(Duration.of(1, ChronoUnit.MINUTES));
 
         for(final ConsumerRecord<String, String> record : records){
             db_recovered.put(record.key(), record.value());

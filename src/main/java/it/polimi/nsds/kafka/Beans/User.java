@@ -6,13 +6,13 @@ public class User {
     private final String username;
     private final String password;
     private final String role;
-    private final List<String> courseIds;
+    private final List<String> courses;
 
-    public User(String username, String password, String role, List<String> courseIds) {
+    public User(String username, String password, String role, List<String> courses) {
         this.username = username;
         this.password = password;
         this.role = role;
-        this.courseIds = courseIds;
+        this.courses = courses;
     }
 
     public String getUsername() {
@@ -27,11 +27,11 @@ public class User {
         return role;
     }
 
-    public List<String> getCourseIds() {
-        return courseIds;
+    public List<String> getCourses() {
+        return courses;
     }
 
-    public void addCourse(String id){
-        courseIds.add(id);
+    public void addCourse(String course){
+        courses.add(course);
     }
 }

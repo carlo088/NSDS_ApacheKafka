@@ -19,6 +19,8 @@ public class UserService {
     public UserService(Map<String, String> db_users) {
         this.db_users = db_users;
         userProducer = Utils.setProducer();
+
+        // start a thread for the consumer
         UserConsumer consumer = new UserConsumer(db_users);
         consumer.start();
     }
@@ -80,9 +82,9 @@ public class UserService {
             User user = gson.fromJson(userJson, User.class);
 
             // get all courses
-            List<String> courseIds = user.getCourseIds();
+            List<String> courses = user.getCourses();
             String response = "";
-            for (String course: courseIds) {
+            for (String course: courses) {
                 response += (course + " ");
             }
             return response;
@@ -91,7 +93,7 @@ public class UserService {
         }
     }
 
-    public String enrollCourse(String username, String courseId) {
+    public String enrollCourse(String username, String course) {
         if (!db_users.containsKey(username))
             return "User not found";
 
@@ -106,19 +108,17 @@ public class UserService {
         User user = gson.fromJson(db_users.get(username), User.class);
 
         // if user isn't already enrolled, add the course
-        if (user.getCourseIds().contains(courseId))
-            return "User is already enrolled in course " + courseId;
+        if (user.getCourses().contains(course))
+            return "User is already enrolled in this course";
 
-        user.addCourse(courseId);
+        user.addCourse(course);
 
-        // update the CourseService db_users value associated with the key username in the db_users map
-        db_users.put(username, gson.toJson(user));
+        // update user in db_users and Kafka
         String userJson = gson.toJson(user);
+        db_users.put(username, userJson);
+
         final ProducerRecord<String, String> newUser = new ProducerRecord<>("users", user.getUsername(), userJson);
         userProducer.send(newUser);
-
-        // TODO Send record of new enrollment such that Registration service can pull it?
-
-        return "Enrolled in course " + courseId;
+        return "Enrolled in course";
     }
 }

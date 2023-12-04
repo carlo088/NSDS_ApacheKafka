@@ -1,17 +1,13 @@
 package it.polimi.nsds.kafka.BackEnd.Services;
 
 import java.util.Map;
-import java.util.Properties;
 import java.util.Random;
 
 import com.google.gson.Gson;
-import it.polimi.nsds.kafka.Beans.Course;
 import it.polimi.nsds.kafka.Beans.Project;
 import it.polimi.nsds.kafka.Utils;
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.StringSerializer;
 
 public class ProjectService{
 
@@ -38,6 +34,7 @@ public class ProjectService{
         //generate key
         Random rand = new Random();
         String id = null;
+
         boolean valid = false;
         while(!valid){
             int randId = rand.nextInt(1001);
@@ -54,8 +51,20 @@ public class ProjectService{
         return "Project " + id + " correctly posted";
     }
 
-    public String submitNewSolution(String solutionJson){
+    public String showCourseProjects(String courseId){
+        Gson gson = new Gson();
+        String response = "";
+        for (String projectJson: db_projects.values()) {
+            Project project = gson.fromJson(projectJson, Project.class);
+            if(project.getCourseId().equals(courseId))
+                response += projectJson + " ";
+        }
+        return response;
+    }
 
+
+    public String submitNewSolution(String solutionJson){
+        return "submisison";
     }
 
 }

@@ -37,7 +37,7 @@ public class UserConsumer extends Thread{
                 Course course = gson.fromJson(record.value(), Course.class);
                 if(db_user.containsKey(course.getProfessor())){
                     User user = gson.fromJson(db_user.get(course.getProfessor()), User.class);
-                    user.addCourse(course.getId());
+                    user.addCourse(record.value());
                     db_user.put(course.getProfessor(), gson.toJson(user));
 
                     // update Kafka record

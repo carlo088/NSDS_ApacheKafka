@@ -3,17 +3,15 @@ package it.polimi.nsds.kafka.FrontEnd;
 import com.google.gson.Gson;
 import it.polimi.nsds.kafka.Beans.Course;
 import it.polimi.nsds.kafka.Beans.Project;
-import it.polimi.nsds.kafka.Beans.Solution;
+import it.polimi.nsds.kafka.Beans.Submission;
 import it.polimi.nsds.kafka.Beans.User;
+import org.apache.kafka.common.protocol.types.Field;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 import static java.lang.Integer.parseInt;
 
@@ -329,7 +327,7 @@ public class ClientInterface {
         send("SHOW_PROFESSORS");
         String response = receive();
         List<String> professors = new ArrayList<>(Arrays.asList(response.split(" ")));
-        if (professors.isEmpty()){
+        if (professors.isEmpty() || professors.get(0).equals("")){
             System.out.println("There are no registered professors");
             return;
         }
@@ -368,22 +366,22 @@ public class ClientInterface {
     private static void enrollCourse() throws IOException, ClassNotFoundException {
         send("SHOW_ALL_COURSES");
         String response = receive();
-        List<String> availableCourses = new ArrayList<>(Arrays.asList(response.split(" ")));
+        List<String> courses = new ArrayList<>(Arrays.asList(response.split(" ")));
 
-        if (availableCourses.isEmpty()){
+        if (courses.isEmpty() || courses.get(0).equals("")){
             System.out.println("There are no available courses");
             return;
         }
 
         System.out.println("Available courses:\n");
-        List<String> availableIDs = new ArrayList<>();
+        Map<String, String> availableCourses = new HashMap<>();
         Gson gson = new Gson();
-        for (String courseJson: availableCourses) {
+        for (String courseJson: courses) {
             Course course = gson.fromJson(courseJson, Course.class);
             System.out.println("ID = " + course.getId() + " | NAME = " + course.getName() + " | CFU = " + course.getCfu() +
                     " | #PROJECTS = " + course.getProjectNum() + " | PROF = " + course.getProfessor() + " |");
 
-            availableIDs.add(course.getId());
+            availableCourses.put(course.getId(), courseJson);
         }
         
         System.out.println("Choose a course by entering its ID:");
@@ -391,64 +389,81 @@ public class ClientInterface {
         boolean valid = false;
         while(!valid){
             selectedCourseID = input.nextLine();
-            if (!availableIDs.contains(selectedCourseID)) {
+            if (!availableCourses.containsKey(selectedCourseID)) {
                 System.out.println("Invalid course ID. Please try again.");
             } else {
                 valid = true;
             }
         }
 
-        send("ENROLL"+ " " + usernameSession + " " + selectedCourseID);
+        send("ENROLL"+ " " + usernameSession + " " + availableCourses.get(selectedCourseID));
         String enrollResponse = receive();
         // print CourseService method output
         System.out.println(enrollResponse);
     }
 
-    private static void submitSolution(){
+    private static void submitSolution() throws IOException, ClassNotFoundException {
+        send("SHOW_USER_COURSES" + " " + usernameSession);
+        String response = receive();
+        List<String> courses = new ArrayList<>(Arrays.asList(response.split(" ")));
+
+        if(courses.isEmpty() || courses.get(0).equals("")){
+            System.out.println("There are no courses");
+            return;
+        }
 
         System.out.println("Available projects:\n");
+        Gson gson = new Gson();
         List<String> availableIDs = new ArrayList<>();
-        availableIDs = usernameSession.getProjectsId()
-
-        for (String ID: availableIDs) {
-            System.out.println("Course ID = " + ID([0]) + " | Project ID = " + ID([1]));
+        for (String courseJson: courses) {
+            Course course = gson.fromJson(courseJson, Course.class);
+            System.out.println(course.getName());
+            send("SHOW_COURSE_PROJECTS" + " " + course.getId());
+            String resp = receive();
+            List<String> projects = new ArrayList<>(Arrays.asList(resp.split(" ")));
+            if(projects.isEmpty() || projects.get(0).equals("")){
+                System.out.println("No projects available for this course");
+            }
+            else {
+                for (String projectJson : projects) {
+                    Project project = gson.fromJson(projectJson, Project.class);
+                    System.out.println("ID = " + project.getId() + " | DESCRIPTION = " + project.getDescription());
+                    availableIDs.add(project.getId());
+                }
+            }
         }
 
         System.out.println("Choose a project by entering its ID:");
-        String selectedCourseID = null;
+        String selectedProjectID = null;
         boolean valid = false;
         while(!valid){
-            selectedCourseID = input.nextLine();
-            if (!availableIDs.contains(selectedCourseID)) {
+            selectedProjectID = input.nextLine();
+            if (!availableIDs.contains(selectedProjectID)) {
                 System.out.println("Invalid project ID. Please try again.");
             } else {
                 valid = true;
             }
         }
 
-        System.out.println("Submit solution for project {selectedProjectID}:");
+        System.out.println("Submit solution for project " + selectedProjectID + ":");
         String projectSolution = null;
-        boolean valid = false;
+        valid = false;
         while(!valid){
-            selectedCourseID = input.nextLine();
-            if (!availableIDs.contains(selectedCourseID)) {
+            projectSolution = input.nextLine();
+            if (projectSolution.equals("")) {
                 System.out.println("Invalid solution. Please try again.");
             } else {
                 valid = true;
             }
         }
 
-        Gson gson = new Gson();
-        Solution solution = new Solution(usernameSession, selectedCourseID, projectSolution);
-        String solutionJson = gson.toJson(solution);
+        Submission submission = new Submission(null, selectedProjectID, usernameSession, projectSolution, -1);
+        String submissionJson = gson.toJson(submission);
 
-        send("SUBMIT_NEW"+ " " + solutionJson);
+        send("SUBMIT_NEW"+ " " + submissionJson);
         String projectSolutionResponse = receive();
         // print ProjectService method output
         System.out.println(projectSolutionResponse);
-
-
-
     }
 
     private static void checkSubmission(){
@@ -458,16 +473,21 @@ public class ClientInterface {
     private static void postProject()  throws IOException, ClassNotFoundException{
         send("SHOW_USER_COURSES" + " " + usernameSession);
         String response = receive();
-        List<String> courseIds = new ArrayList<>(Arrays.asList(response.split(" ")));
+        List<String> courses = new ArrayList<>(Arrays.asList(response.split(" ")));
 
-        if(courseIds.isEmpty()){
+        if(courses.isEmpty() || courses.get(0).equals("")){
             System.out.println("There are no courses");
             return;
         }
 
         System.out.println("Available courses:\n");
-        for (String courseId: courseIds) {
-            System.out.println(courseId);
+        Map<String, String> availableCourses = new HashMap<>();
+        Gson gson = new Gson();
+        for (String courseJson: courses) {
+            Course course = gson.fromJson(courseJson, Course.class);
+            System.out.println("ID = " + course.getId() + " | NAME = " + course.getName() + " |");
+
+            availableCourses.put(course.getId(), courseJson);
         }
 
         String courseID = null;
@@ -478,7 +498,7 @@ public class ClientInterface {
         while(!valid){
             courseID = input.nextLine();
 
-            if (!courseIds.contains(courseID)){
+            if (!availableCourses.containsKey(courseID)){
                 System.out.println("Invalid course ID, try again");
             }
             else {
@@ -500,7 +520,6 @@ public class ClientInterface {
         }
 
         Project project = new Project(null, desc, courseID);
-        Gson gson = new Gson();
         String projectJson = gson.toJson(project);
 
         send("POST" + " " + projectJson);
