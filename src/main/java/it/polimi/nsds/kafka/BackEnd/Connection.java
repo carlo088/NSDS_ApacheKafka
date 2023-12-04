@@ -115,6 +115,10 @@ public class Connection implements Runnable{
                 response = userService.enrollCourse(values[1], values[2]);
                 send(response);
                 break;
+            case "SUBMIT_NEW":
+                response = projectService.submitNewSolution(values[0]);
+                send(response);
+                break;
             default:
                 send("");
                 break;

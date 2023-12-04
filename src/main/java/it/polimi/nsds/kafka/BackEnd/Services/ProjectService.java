@@ -54,4 +54,8 @@ public class ProjectService{
         return "Project " + id + " correctly posted";
     }
 
+    public String submitNewSolution(String solutionJson){
+
+    }
+
 }

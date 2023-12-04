@@ -3,6 +3,7 @@ package it.polimi.nsds.kafka.FrontEnd;
 import com.google.gson.Gson;
 import it.polimi.nsds.kafka.Beans.Course;
 import it.polimi.nsds.kafka.Beans.Project;
+import it.polimi.nsds.kafka.Beans.Solution;
 import it.polimi.nsds.kafka.Beans.User;
 
 import java.io.IOException;
@@ -404,6 +405,49 @@ public class ClientInterface {
     }
 
     private static void submitSolution(){
+
+        System.out.println("Available projects:\n");
+        List<String> availableIDs = new ArrayList<>();
+        availableIDs = usernameSession.getProjectsId()
+
+        for (String ID: availableIDs) {
+            System.out.println("Course ID = " + ID([0]) + " | Project ID = " + ID([1]));
+        }
+
+        System.out.println("Choose a project by entering its ID:");
+        String selectedCourseID = null;
+        boolean valid = false;
+        while(!valid){
+            selectedCourseID = input.nextLine();
+            if (!availableIDs.contains(selectedCourseID)) {
+                System.out.println("Invalid project ID. Please try again.");
+            } else {
+                valid = true;
+            }
+        }
+
+        System.out.println("Submit solution for project {selectedProjectID}:");
+        String projectSolution = null;
+        boolean valid = false;
+        while(!valid){
+            selectedCourseID = input.nextLine();
+            if (!availableIDs.contains(selectedCourseID)) {
+                System.out.println("Invalid solution. Please try again.");
+            } else {
+                valid = true;
+            }
+        }
+
+        Gson gson = new Gson();
+        Solution solution = new Solution(usernameSession, selectedCourseID, projectSolution);
+        String solutionJson = gson.toJson(solution);
+
+        send("SUBMIT_NEW"+ " " + solutionJson);
+        String projectSolutionResponse = receive();
+        // print ProjectService method output
+        System.out.println(projectSolutionResponse);
+
+
 
     }
 
