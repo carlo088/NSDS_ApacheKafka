@@ -359,8 +359,43 @@ public class ClientInterface {
     }
 
 
-    private static void removeCourse(){
+    private static void removeCourse() throws IOException, ClassNotFoundException{
+        send("SHOW_ALL_COURSES");
+        String response = receive();
+        List<String> courses = new ArrayList<>(Arrays.asList(response.split(" ")));
 
+        if (courses.isEmpty() || courses.get(0).equals("")){
+            System.out.println("There are no available courses");
+            return;
+        }
+
+        System.out.println("Available courses:\n");
+        List<String> courseIDs = new ArrayList<>();
+        Gson gson = new Gson();
+        for (String courseJson: courses) {
+            Course course = gson.fromJson(courseJson, Course.class);
+            System.out.println("ID = " + course.getId() + " | NAME = " + course.getName() + " | CFU = " + course.getCfu() +
+                    " | #PROJECTS = " + course.getProjectNum() + " |");
+
+            courseIDs.add(course.getId());
+        }
+
+        System.out.println("Choose a course by entering its ID:");
+        String selectedCourseID = null;
+        boolean valid = false;
+        while(!valid){
+            selectedCourseID = input.nextLine();
+            if (!courseIDs.contains(selectedCourseID)) {
+                System.out.println("Invalid course ID. Please try again.");
+            } else {
+                valid = true;
+            }
+        }
+
+        /*TODO: */
+        send("REMOVE_COURSE" + " " + selectedCourseID);
+        response = receive();
+        System.out.println(response);
     }
 
     private static void enrollCourse() throws IOException, ClassNotFoundException {
