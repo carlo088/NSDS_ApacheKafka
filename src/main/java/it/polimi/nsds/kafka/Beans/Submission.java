@@ -30,4 +30,8 @@ public class Submission {
     public int getGrade() {
         return grade;
     }
+
+    public String getSolution() {
+        return solution;
+    }
 }

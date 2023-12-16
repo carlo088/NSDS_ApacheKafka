@@ -466,7 +466,50 @@ public class ClientInterface {
         System.out.println(projectSolutionResponse);
     }
 
-    private static void checkSubmission(){
+    private static void checkSubmission() throws IOException, ClassNotFoundException{
+        send("SHOW_USER_SUBMISSIONS" + " " + usernameSession);
+         String response = receive();
+         List<String> submissions = new ArrayList<>(Arrays.asList(response.split(" ")));
+
+         if(submissions.isEmpty() || submissions.get(0).equals("")){
+            System.out.println("There are no submissions");
+            return;
+        }
+
+        System.out.println("Select one of the following submission by entering its ID:");
+        Map<String, String> sentSubmissions = new HashMap<>();
+        Gson gson = new Gson();
+        for (String submissionJson: submissions) {
+            Submission submission = gson.fromJson(submissionJson, Submission.class);
+            System.out.println("ID = " + submission.getId() + " | PROJECTID = " + submission.getProjectId() + " |");
+
+            sentSubmissions.put(submission.getId(), submissionJson);
+        }
+        
+        String submissionID = null;
+        boolean valid = false;
+        System.out.println("Insert the course ID");
+        while(!valid){
+            submissionID = input.nextLine();
+
+            if (!sentSubmissions.containsKey(submissionID)){
+                System.out.println("Invalid submission ID, try again");
+            }
+            else {
+                valid = true;
+            }
+        }
+
+        Submission sub = gson.fromJson(sentSubmissions.get(submissionID), Submission.class);
+        int notGraded = -1;
+        int grade = sub.getGrade();
+
+        if (grade == notGraded){
+            System.out.println("This submission has not been graded yet");
+            return;
+        }
+
+        System.out.println("This submission has been graded, the grade is: " + grade);
 
     }
 
@@ -526,7 +569,123 @@ public class ClientInterface {
         System.out.println(receive());
     }
 
-    private static void gradeSolution(){
+    private static void gradeSolution() throws IOException, ClassNotFoundException{
+        send("SHOW_ALL_COURSES");
+        String response = receive();
+        List<String> courses = new ArrayList<>(Arrays.asList(response.split(" ")));
 
+        if (courses.isEmpty() || courses.get(0).equals("")){
+            System.out.println("There are no available courses");
+            return;
+        }
+
+        System.out.println("Available courses:\n");
+        Map<String, String> availableCourses = new HashMap<>();
+        Gson gson = new Gson();
+        for (String courseJson: courses) {
+            Course course = gson.fromJson(courseJson, Course.class);
+            System.out.println("ID = " + course.getId() + " | NAME = " + course.getName() + " | CFU = " + course.getCfu() +
+                    " | #PROJECTS = " + course.getProjectNum() + " |");
+
+            availableCourses.put(course.getId(), courseJson);
+        }
+
+        String courseID = null;
+        boolean valid = false;
+        System.out.println("Insert the course ID");
+        while(!valid){
+            courseID = input.nextLine();
+
+            if (!availableCourses.containsKey(courseID)){
+                System.out.println("Invalid course ID, try again");
+            }
+            else {
+                valid = true;
+            }
+        }
+
+        send("SHOW_COURSE_PROJECTS" + " " + courseID);
+        String resp = receive();
+        List<String> projects = new ArrayList<>(Arrays.asList(resp.split(" ")));
+        List<String> projectIDs = new ArrayList<>();
+
+        if(projects.isEmpty() || projects.get(0).equals("")){
+                System.out.println("No projects available for this course");
+                return;
+            }
+            else {
+                for (String projectJson : projects) {
+                    Project project = gson.fromJson(projectJson, Project.class);
+                    System.out.println("ID = " + project.getId() + " | DESCRIPTION = " + project.getDescription());
+                    projectIDs.add(project.getId());
+                }
+        }
+
+        String projectID = null;
+        valid = false;
+        System.out.println("Insert the project ID");
+        while(!valid){
+            courseID = input.nextLine();
+
+            if (!projectIDs.contains(projectID)){
+                System.out.println("Invalid project ID, try again");
+            }
+            else {
+                valid = true;
+            }
+        }
+
+        /*TODO: */
+        send("PROJECT_SUBMISSIONS" + " " + projectID);
+        response = receive();
+        List<String> submissions = new ArrayList<>(Arrays.asList(resp.split(" ")));
+        List<String> submissionIDs = new ArrayList<>();
+
+        if(submissions.isEmpty() || submissions.get(0).equals("")){
+                System.out.println("There is no submission for this project");
+                return;
+            }
+            else {
+                for (String submissionJson : submissions) {
+                    Submission submission = gson.fromJson(submissionJson, Submission.class);
+                    System.out.println("ID = " + submission.getId() + " | SOLUTION = " + submission.getSolution());
+                    submissionIDs.add(submission.getId());
+                }
+        }
+
+
+        String submissionID = null;
+        valid = false;
+        System.out.println("Insert the submission ID");
+        while(!valid){
+            submissionID = input.nextLine();
+
+            if (!submissionIDs.contains(submissionID)){
+                System.out.println("Invalid submission ID, try again");
+            }
+            else {
+                valid = true;
+            }
+        }
+
+        int grade = -1;
+        valid = false;
+        System.out.println("Insert the grade for this submission");
+        while(!valid){
+            grade = Integer.valueOf(input.nextLine());
+
+            //TODO: 
+            if (grade > 5 || grade < 0){
+                System.out.println("Invalid submission ID, try again");
+            }
+            else {
+                valid = true;
+            }
+        }
+
+        /*TODO: */
+        send("SUBMISSION_GRADE" + " " + submissionID + " " + Integer.toString(grade));
+        response = receive();
+        System.out.println(response);
     }
 }
