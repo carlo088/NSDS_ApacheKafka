@@ -10,18 +10,21 @@ import java.util.List;
 import java.util.Map;
 
 public class UserService {
-    // users stored in a private data structure
+    // users and courses stored in private data structures
     private final Map<String, String> db_users;
+    private final Map<String, String> db_courses;
 
     // kafka producer
     private final KafkaProducer<String, String> userProducer;
 
-    public UserService(Map<String, String> db_users) {
+    public UserService(Map<String, String> db_users, Map<String, String> db_courses) {
         this.db_users = db_users;
+        this.db_courses = db_courses;
+
         userProducer = Utils.setProducer();
 
         // start a thread for the consumer
-        UserConsumer consumer = new UserConsumer(db_users);
+        UserConsumer consumer = new UserConsumer(db_courses);
         consumer.start();
     }
 
@@ -74,6 +77,7 @@ public class UserService {
         return response;
     }
 
+    // TODO: rendere sincronizzata con il metodo removeCourse
     public String showUserCourses(String username){
         if (db_users.containsKey(username)) {
             // get logged user
@@ -81,11 +85,12 @@ public class UserService {
             Gson gson = new Gson();
             User user = gson.fromJson(userJson, User.class);
 
-            // get all courses
-            List<String> courses = user.getCourses();
+            // get all course IDs
+            List<String> courseIDs = user.getCourseIDs();
             String response = "";
-            for (String course: courses) {
-                response += (course + " ");
+            for (String courseID: courseIDs) {
+                String courseJson = db_courses.get(courseID);
+                response += (courseJson + " ");
             }
             return response;
         } else {
@@ -93,25 +98,23 @@ public class UserService {
         }
     }
 
-    public String enrollCourse(String username, String course) {
+    // TODO: rendere sincronizzata con il metodo removeCourse
+    public String enrollCourse(String username, String courseID) {
         if (!db_users.containsKey(username))
             return "User not found";
 
-        //FIXME: il controllo risulterebbe molto più complesso nel caso il corso venga eliminato durante una enroll
-        /*
-        if (!db_courses.containsKey(courseId))
+        if (!db_courses.containsKey(courseID))
             return "Course not found";
-         */
 
         // Load user from db_users
         Gson gson = new Gson();
         User user = gson.fromJson(db_users.get(username), User.class);
 
         // if user isn't already enrolled, add the course
-        if (user.getCourses().contains(course))
+        if (user.getCourseIDs().contains(courseID))
             return "User is already enrolled in this course";
 
-        user.addCourse(course);
+        user.addCourseID(courseID);
 
         // update user in db_users and Kafka
         String userJson = gson.toJson(user);

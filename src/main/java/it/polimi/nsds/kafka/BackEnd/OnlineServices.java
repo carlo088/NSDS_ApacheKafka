@@ -45,7 +45,7 @@ public class OnlineServices {
         Map<String, String> db_projects = recover("projects");
 
         // initialize all services
-        UserService userService = new UserService(db_users);
+        UserService userService = new UserService(db_users, db_courses);
         CourseService courseService = new CourseService(db_courses);
         ProjectService projectService = new ProjectService(db_projects);
         RegistrationService registrationService = new RegistrationService();
