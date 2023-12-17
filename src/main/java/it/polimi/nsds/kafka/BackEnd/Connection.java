@@ -95,10 +95,11 @@ public class Connection implements Runnable{
                 response = userService.showUserCourses(values[1]);
                 send(response);
                 break;
-            case "POST":
-                response = projectService.newProject(values[1]);
-                send(response);
-                break;
+            // Da spostare sul CourseService
+            // case "POST":
+            //     response = projectService.newProject(values[1]);
+            //     send(response);
+            //     break;
             case "SHOW_PROFESSORS":
                 response = userService.showProfessors();
                 send(response);
@@ -115,10 +116,11 @@ public class Connection implements Runnable{
                 response = userService.enrollCourse(values[1], values[2]);
                 send(response);
                 break;
-            case "SHOW_COURSE_PROJECTS":
-                response = projectService.showCourseProjects(values[1]);
-                send((response));
-                break;
+            // Da spostare sul CourseService
+            // case "SHOW_COURSE_PROJECTS":
+            //     response = projectService.showCourseProjects(values[1]);
+            //     send((response));
+            //     break;
             case "SUBMIT_NEW":
                 response = projectService.submitNewSolution(values[0]);
                 send(response);
