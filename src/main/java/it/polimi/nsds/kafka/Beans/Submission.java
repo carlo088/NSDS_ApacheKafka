@@ -12,7 +12,7 @@ public class Submission {
         this.projectId = projectId;
         this.studentUsername = studentUsername;
         this.solution = solution;
-        this.grade = grade;
+        this.grade = -1;
     }
 
     public String getId() {
@@ -29,5 +29,17 @@ public class Submission {
 
     public int getGrade() {
         return grade;
+    }
+
+    public String getSolution() {
+        return solution;
+    }
+
+    public void setGrade(int grade) {
+        this.grade = grade;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }
