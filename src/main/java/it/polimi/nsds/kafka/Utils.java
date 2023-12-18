@@ -10,13 +10,7 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import java.util.Properties;
 
 public class Utils {
-    public static KafkaProducer<String, String> setProducer(){
-        final Properties userProducerProps = new Properties();
-        userProducerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        userProducerProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        userProducerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        return new KafkaProducer<>(userProducerProps);
-    }
+
 
     public static KafkaConsumer<String, String> setConsumer(){
         final Properties consumerProps = new Properties();

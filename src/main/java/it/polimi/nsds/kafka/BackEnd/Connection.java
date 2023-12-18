@@ -24,7 +24,8 @@ public class Connection implements Runnable{
 
     private boolean isActive = true;
 
-    public Connection(Socket socket, UserService userService, CourseService courseService, ProjectService projectService, RegistrationService registrationService){
+    public Connection(Socket socket, UserService userService, CourseService courseService,
+                      ProjectService projectService, RegistrationService registrationService){
         this.socket = socket;
         this.userService = userService;
         this.courseService = courseService;
@@ -95,13 +96,12 @@ public class Connection implements Runnable{
                 response = userService.showUserCourses(values[1]);
                 send(response);
                 break;
-            // Da spostare sul CourseService
-            // case "POST":
-            //     response = projectService.newProject(values[1]);
-            //     send(response);
-            //     break;
-            case "SHOW_PROFESSORS":
-                response = userService.showProfessors();
+            case "ENROLL":
+                response = userService.enrollCourse(values[1], values[2]);
+                send(response);
+                break;
+            case "POST":
+                response = courseService.newProject(values[1]);
                 send(response);
                 break;
             case "ADD_COURSE":
@@ -112,17 +112,28 @@ public class Connection implements Runnable{
                 response = courseService.showAllCourses();
                 send(response);
                 break;
-            case "ENROLL":
-                response = userService.enrollCourse(values[1], values[2]);
+            case "REMOVE_COURSE":
+                response = courseService.removeCourse(values[1]);
                 send(response);
                 break;
-            // Da spostare sul CourseService
-            // case "SHOW_COURSE_PROJECTS":
-            //     response = projectService.showCourseProjects(values[1]);
-            //     send((response));
-            //     break;
+            case "SHOW_COURSE_PROJECTS":
+                response = courseService.showCourseProjects(values[1]);
+                send((response));
+                break;
             case "SUBMIT_NEW":
-                response = projectService.submitNewSolution(values[0]);
+                response = projectService.submitNewSolution(values[1]);
+                send(response);
+                break;
+            case "SHOW_USER_SUBMISSIONS":
+                response = projectService.checkSubmissionStatus(values[1]);
+                send(response);
+                break;
+            case "SHOW_PROJECT_SUBMISSIONS":
+                response = projectService.showNewSubmissions(values[1]);
+                send(response);
+                break;
+            case "GRADE_SUBMISSION":
+                response = projectService.updateSubmissionGrade(values[1], Integer.parseInt(values[2]));
                 send(response);
                 break;
             default:

@@ -2,9 +2,9 @@ package it.polimi.nsds.kafka.Beans;
 
 public class Submission {
     private String id;
-    private String projectId;
-    private String studentUsername;
-    private String solution;
+    private final String projectId;
+    private final String studentUsername;
+    private final String solution;
     private int grade;
 
     public Submission(String id, String projectId, String studentUsername, String solution, int grade) {
@@ -12,7 +12,7 @@ public class Submission {
         this.projectId = projectId;
         this.studentUsername = studentUsername;
         this.solution = solution;
-        this.grade = -1;
+        this.grade = grade;
     }
 
     public String getId() {

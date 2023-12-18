@@ -5,7 +5,6 @@ import it.polimi.nsds.kafka.Beans.Course;
 import it.polimi.nsds.kafka.Beans.Project;
 import it.polimi.nsds.kafka.Beans.Submission;
 import it.polimi.nsds.kafka.Beans.User;
-import org.apache.kafka.common.protocol.types.Field;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -78,10 +77,10 @@ public class ClientInterface {
     }
 
     private static void homePage() throws IOException, ClassNotFoundException {
-        System.out.println("Welcome to Online Services for continuous evaluation\n");
+        System.out.println("Welcome to Online Services for continuous evaluation");
         boolean exit = false;
         while(!exit){
-            System.out.println("Please press one of the following commands:");
+            System.out.println("\nPlease press one of the following commands:");
             System.out.println("REGISTER\nLOGIN\nADMIN\nQUIT\n");
             String command = input.nextLine().toUpperCase();
             switch(command) {
@@ -105,10 +104,10 @@ public class ClientInterface {
     }
 
     private static void adminPage() throws IOException, ClassNotFoundException {
-        System.out.println("ADMIN Page:\n");
+        System.out.println("\nADMIN Page:\n");
         boolean exit = false;
         while(!exit){
-            System.out.println("Please press one of the following commands:");
+            System.out.println("\nPlease press one of the following commands:");
             System.out.println("ADD\nREMOVE\nHOME\n");
             String command = input.nextLine().toUpperCase();
             switch(command) {
@@ -122,17 +121,17 @@ public class ClientInterface {
                     exit = true;
                     break;
                 default:
-                    System.out.println("Not a valid command:\n");
+                    System.out.println("Not a valid command:");
                     break;
             }
         }
     }
 
     private static void studentPage() throws IOException, ClassNotFoundException {
-        System.out.println("STUDENT Page:\n");
+        System.out.println("\nSTUDENT Page:\n");
         boolean exit = false;
         while(!exit){
-            System.out.println("Please press one of the following commands:");
+            System.out.println("\nPlease press one of the following commands:");
             System.out.println("ENROLL\nSUBMIT\nCHECK\nHOME\n");
             String command = input.nextLine().toUpperCase();
             switch(command) {
@@ -150,17 +149,17 @@ public class ClientInterface {
                     exit = true;
                     break;
                 default:
-                    System.out.println("Not a valid command:\n");
+                    System.out.println("Not a valid command:");
                     break;
             }
         }
     }
 
     private static void professorPage() throws IOException, ClassNotFoundException{
-        System.out.println("PROFESSOR Page:\n");
+        System.out.println("\nPROFESSOR Page:\n");
         boolean exit = false;
         while(!exit){
-            System.out.println("Please press one of the following commands:");
+            System.out.println("\nPlease press one of the following commands:");
             System.out.println("POST\nGRADE\nHOME\n");
             String command = input.nextLine().toUpperCase();
             switch(command) {
@@ -175,7 +174,7 @@ public class ClientInterface {
                     exit = true;
                     break;
                 default:
-                    System.out.println("Not a valid command:\n");
+                    System.out.println("Not a valid command:");
                     break;
             }
         }
@@ -281,7 +280,6 @@ public class ClientInterface {
         String name = null;
         int cfu = 0;
         int numberOfProjects = 0;
-        String professor = null;
     
         System.out.println("Insert the name of the course:");
         boolean valid = false;
@@ -324,33 +322,8 @@ public class ClientInterface {
             }
         }
 
-        send("SHOW_PROFESSORS");
-        String response = receive();
-        List<String> professors = new ArrayList<>(Arrays.asList(response.split(" ")));
-        if (professors.isEmpty() || professors.get(0).equals("")){
-            System.out.println("There are no registered professors");
-            return;
-        }
-
-        System.out.println("Available professors: ");
-        for (String prof: professors) {
-            System.out.println(prof);
-        }
-
-
-        System.out.println("Insert the username of the professor:");
-        valid = false;
-        while (!valid) {
-            professor = input.nextLine();
-            if (!professors.contains(professor)) {
-                System.out.println("Invalid username");
-            } else {
-                valid = true;
-            }
-        }
-
         // create a bean Course and parse it to Json
-        Course course = new Course(null, name, cfu, numberOfProjects, professor);
+        Course course = new Course(null, name, cfu, numberOfProjects, new ArrayList<>());
         Gson gson = new Gson();
         String courseJson = gson.toJson(course);
     
@@ -392,7 +365,6 @@ public class ClientInterface {
             }
         }
 
-        /*TODO: */
         send("REMOVE_COURSE" + " " + selectedCourseID);
         response = receive();
         System.out.println(response);
@@ -409,14 +381,14 @@ public class ClientInterface {
         }
 
         System.out.println("Available courses:\n");
-        Map<String, String> availableCourses = new HashMap<>();
+        List<String> availableIDs = new ArrayList<>();
         Gson gson = new Gson();
         for (String courseJson: courses) {
             Course course = gson.fromJson(courseJson, Course.class);
             System.out.println("ID = " + course.getId() + " | NAME = " + course.getName() + " | CFU = " + course.getCfu() +
-                    " | #PROJECTS = " + course.getProjectNum() + " | PROF = " + course.getProfessor() + " |");
+                    " | #PROJECTS = " + course.getProjectNum()  + " |");
 
-            availableCourses.put(course.getId(), courseJson);
+            availableIDs.add(course.getId());
         }
         
         System.out.println("Choose a course by entering its ID:");
@@ -424,16 +396,15 @@ public class ClientInterface {
         boolean valid = false;
         while(!valid){
             selectedCourseID = input.nextLine();
-            if (!availableCourses.containsKey(selectedCourseID)) {
+            if (!availableIDs.contains(selectedCourseID)) {
                 System.out.println("Invalid course ID. Please try again.");
             } else {
                 valid = true;
             }
         }
 
-        send("ENROLL"+ " " + usernameSession + " " + availableCourses.get(selectedCourseID));
+        send("ENROLL"+ " " + usernameSession + " " + selectedCourseID);
         String enrollResponse = receive();
-        // print CourseService method output
         System.out.println(enrollResponse);
     }
 
@@ -466,6 +437,12 @@ public class ClientInterface {
                     availableIDs.add(project.getId());
                 }
             }
+            System.out.println();
+        }
+
+        if(availableIDs.isEmpty()){
+            System.out.println("No projects available for submission");
+            return;
         }
 
         System.out.println("Choose a project by entering its ID:");
@@ -497,7 +474,6 @@ public class ClientInterface {
 
         send("SUBMIT_NEW"+ " " + submissionJson);
         String projectSolutionResponse = receive();
-        // print ProjectService method output
         System.out.println(projectSolutionResponse);
     }
 
@@ -516,14 +492,15 @@ public class ClientInterface {
         Gson gson = new Gson();
         for (String submissionJson: submissions) {
             Submission submission = gson.fromJson(submissionJson, Submission.class);
-            System.out.println("ID = " + submission.getId() + " | PROJECTID = " + submission.getProjectId() + " |");
+            System.out.println("ID = " + submission.getId() + " | PROJECT_ID = " + submission.getProjectId()
+                    + " | SOLUTION = " + submission.getSolution()+ " |");
 
             sentSubmissions.put(submission.getId(), submissionJson);
         }
         
         String submissionID = null;
         boolean valid = false;
-        System.out.println("Insert the course ID");
+        System.out.println("Insert the submission ID");
         while(!valid){
             submissionID = input.nextLine();
 
@@ -549,7 +526,7 @@ public class ClientInterface {
     }
 
     private static void postProject()  throws IOException, ClassNotFoundException{
-        send("SHOW_USER_COURSES" + " " + usernameSession);
+        send("SHOW_ALL_COURSES");
         String response = receive();
         List<String> courses = new ArrayList<>(Arrays.asList(response.split(" ")));
 
@@ -660,7 +637,7 @@ public class ClientInterface {
         valid = false;
         System.out.println("Insert the project ID");
         while(!valid){
-            courseID = input.nextLine();
+            projectID = input.nextLine();
 
             if (!projectIDs.contains(projectID)){
                 System.out.println("Invalid project ID, try again");
@@ -670,10 +647,9 @@ public class ClientInterface {
             }
         }
 
-        /*TODO: */
-        send("PROJECT_SUBMISSIONS" + " " + projectID);
+        send("SHOW_PROJECT_SUBMISSIONS" + " " + projectID);
         response = receive();
-        List<String> submissions = new ArrayList<>(Arrays.asList(resp.split(" ")));
+        List<String> submissions = new ArrayList<>(Arrays.asList(response.split(" ")));
         List<String> submissionIDs = new ArrayList<>();
 
         if(submissions.isEmpty() || submissions.get(0).equals("")){
@@ -683,7 +659,8 @@ public class ClientInterface {
             else {
                 for (String submissionJson : submissions) {
                     Submission submission = gson.fromJson(submissionJson, Submission.class);
-                    System.out.println("ID = " + submission.getId() + " | SOLUTION = " + submission.getSolution());
+                    System.out.println("ID = " + submission.getId() + " | STUDENT = " + submission.getStudentUsername()
+                            + " | SOLUTION = " + submission.getSolution());
                     submissionIDs.add(submission.getId());
                 }
         }
@@ -707,19 +684,22 @@ public class ClientInterface {
         valid = false;
         System.out.println("Insert the grade for this submission");
         while(!valid){
-            grade = Integer.valueOf(input.nextLine());
+            try {
+                grade = Integer.parseInt(input.nextLine());
 
-            //TODO: 
-            if (grade > 5 || grade < 0){
-                System.out.println("Invalid submission ID, try again");
-            }
-            else {
-                valid = true;
+                //TODO: choose grading system
+                if (grade > 5 || grade < 0){
+                    System.out.println("Invalid grade, try again");
+                }
+                else {
+                    valid = true;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a valid number for grade.");
             }
         }
 
-        /*TODO: */
-        send("SUBMISSION_GRADE" + " " + submissionID + " " + Integer.toString(grade));
+        send("GRADE_SUBMISSION" + " " + submissionID + " " + grade);
         response = receive();
         System.out.println(response);
     }

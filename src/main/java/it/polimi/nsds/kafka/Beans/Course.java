@@ -1,18 +1,20 @@
 package it.polimi.nsds.kafka.Beans;
 
+import java.util.List;
+
 public class Course {
     private String id;
     private final String name;
     private final int cfu;
     private final int projectNum;
-    private final String professor;
+    private final List<String> projectIds;
 
-    public Course(String id, String name, int cfu, int projectNum, String professor) {
+    public Course(String id, String name, int cfu, int projectNum, List<String> projectIds) {
         this.id = id;
         this.name = name;
         this.cfu = cfu;
         this.projectNum = projectNum;
-        this.professor = professor;
+        this.projectIds = projectIds;
     }
 
     public String getId() {
@@ -35,7 +37,7 @@ public class Course {
         return projectNum;
     }
 
-    public String getProfessor() {
-        return professor;
+    public List<String> getProjectIds() {
+        return projectIds;
     }
 }

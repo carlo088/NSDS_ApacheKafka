@@ -52,7 +52,7 @@ public class TopicManager {
         Map<String, String> recordsMap = new HashMap<>();
 
         consumer.subscribe(Collections.singletonList(topic));
-        final ConsumerRecords<String, String> records = consumer.poll(Duration.of(1, ChronoUnit.MINUTES));
+        final ConsumerRecords<String, String> records = consumer.poll(Duration.of(10, ChronoUnit.SECONDS));
 
         for(final ConsumerRecord<String, String> record : records){
             recordsMap.put(record.key(), record.value());

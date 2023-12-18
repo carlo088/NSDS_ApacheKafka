@@ -4,10 +4,11 @@ import it.polimi.nsds.kafka.BackEnd.Services.CourseService;
 import it.polimi.nsds.kafka.BackEnd.Services.ProjectService;
 import it.polimi.nsds.kafka.BackEnd.Services.RegistrationService;
 import it.polimi.nsds.kafka.BackEnd.Services.UserService;
-import it.polimi.nsds.kafka.Utils;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -17,6 +18,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -37,18 +39,20 @@ public class OnlineServices {
         ServerSocket serverSocket = new ServerSocket(port);
 
         // initialize Kafka consumer used for recovering
-        recoverConsumer = Utils.setConsumer();
+        recoverConsumer = setRecoverConsumer();
 
         // recover data from Kafka records
         Map<String, String> db_users = recover("users");
         Map<String, String> db_courses = recover("courses");
         Map<String, String> db_projects = recover("projects");
+        Map<String, String> db_submissions = recover("submissions");
+        Map<String, String> db_registrations = recover("registrations");
 
         // initialize all services
         UserService userService = new UserService(db_users, db_courses);
-        CourseService courseService = new CourseService(db_courses);
-        ProjectService projectService = new ProjectService(db_projects);
-        RegistrationService registrationService = new RegistrationService();
+        CourseService courseService = new CourseService(db_courses, db_projects);
+        ProjectService projectService = new ProjectService(db_submissions);
+        RegistrationService registrationService = new RegistrationService(db_registrations);
 
         System.out.println("OnlineServices listening on port: " + port);
         while(true){
@@ -64,12 +68,17 @@ public class OnlineServices {
         }
     }
 
+    /**
+     * recovers state of the dbs from Kafka records (Note that recovering a topic can last 1 minute if no record is found)
+     * @param topic topic to recover
+     * @return recovered db
+     */
     private static Map<String, String> recover(String topic){
         System.out.println("Recovering " + topic + "...");
         Map<String, String> db_recovered = new HashMap<>();
 
         recoverConsumer.subscribe(Collections.singletonList(topic));
-        final ConsumerRecords<String, String> records = recoverConsumer.poll(Duration.of(1, ChronoUnit.MINUTES));
+        final ConsumerRecords<String, String> records = recoverConsumer.poll(Duration.of(10, ChronoUnit.SECONDS));
 
         for(final ConsumerRecord<String, String> record : records){
             db_recovered.put(record.key(), record.value());
@@ -77,6 +86,20 @@ public class OnlineServices {
 
         recoverConsumer.unsubscribe();
         return db_recovered;
+    }
+
+    /**
+     * Kafka settings for Recover Consumer
+     * @return Recover Consumer
+     */
+    private static KafkaConsumer<String, String> setRecoverConsumer(){
+        final Properties consumerProps = new Properties();
+        consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "recoverGroup");
+        consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        return new KafkaConsumer<>(consumerProps);
     }
 
 }

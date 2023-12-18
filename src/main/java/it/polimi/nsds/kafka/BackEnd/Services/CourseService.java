@@ -3,11 +3,13 @@ package it.polimi.nsds.kafka.BackEnd.Services;
 import com.google.gson.Gson;
 import it.polimi.nsds.kafka.Beans.Course;
 import it.polimi.nsds.kafka.Beans.Project;
-import it.polimi.nsds.kafka.Utils;
 import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.util.Map;
+import java.util.Properties;
 import java.util.Random;
 
 public class CourseService {
@@ -17,11 +19,17 @@ public class CourseService {
     // kafka producer
     private final KafkaProducer<String, String> courseProducer;
 
-    public CourseService(Map<String, String> db_courses) {
+    public CourseService(Map<String, String> db_courses, Map<String, String> db_projects) {
         this.db_courses = db_courses;
-        courseProducer = Utils.setProducer();
+        this.db_projects = db_projects;
+        courseProducer = setCourseProducer();
     }
 
+    /**
+     * adds a new course
+     * @param courseJson course json
+     * @return message for the client
+     */
     public String newCourse(String courseJson) {
         // get a Course class from a Json file
         Gson gson = new Gson();
@@ -45,6 +53,25 @@ public class CourseService {
         return "Course added correctly";
     }
 
+    /**
+     * removes a course
+     * @param courseId course id
+     * @return message for the client
+     */
+    public synchronized String removeCourse(String courseId){
+        if (!db_courses.containsKey(courseId))
+            return "Course doesn't exists";
+
+        db_courses.remove(courseId);
+
+        //TODO: rimuovere record su Kafka e aggionrare db in UserService
+        return "Course removed correctly";
+    }
+
+    /**
+     * shows all existing courses
+     * @return all the courses in json format
+     */
     public String showAllCourses(){
         String response = "";
         for (String courseJson: db_courses.values()) {
@@ -53,15 +80,22 @@ public class CourseService {
         return response;
     }
 
-    public String newProject(String projectJson){
+    /**
+     * create a new project and add it to the course list
+     * @param projectJson project json
+     * @return message for the client
+     */
+    public synchronized String newProject(String projectJson){
         // get a Project class from a Json file
         Gson gson = new Gson();
         Project project = gson.fromJson(projectJson, Project.class);
 
-        /*
-            QUI VA AGGIUNTO IL CONTROLLO SULL'ESISTENZA DEL CORSO TODO:
-            BISOGNA IMPLEMENTARE UN CONSUMER SUL COURSESERVICE CHE AGGIORNA IL PROPRIO DB CON LA LISTA DEI PROJECTS
-        */
+        if(!db_courses.containsKey(project.getCourseId()))
+            return "Course doesn't exists";
+
+        Course course = gson.fromJson(db_courses.get(project.getCourseId()), Course.class);
+        if (course.getProjectIds().size() == course.getProjectNum())
+            return "You can't add more than " + course.getProjectNum() + " projects to this course";
 
         //generate key
         Random rand = new Random();
@@ -76,22 +110,46 @@ public class CourseService {
         }
 
         project.setId(id);
-        db_projects.put(id, gson.toJson(project));
+        course.getProjectIds().add(id);
 
+        // update course list on local db and Kafka
+        db_courses.put(course.getId(), gson.toJson(course));
+        final ProducerRecord<String, String> courseRecord = new ProducerRecord<>("courses", course.getId(), gson.toJson(course));
+        courseProducer.send(courseRecord);
+
+        // public project on local db and Kafka
+        db_projects.put(project.getId(), gson.toJson(project));
         final ProducerRecord<String, String> projectRecord = new ProducerRecord<>("projects", id, gson.toJson(project));
-        projectProducer.send(projectRecord);
-        return "Project " + id + " correctly posted";
+        courseProducer.send(projectRecord);
+        return "Project correctly posted";
     }
 
+    /**
+     * shows all the projects for a course
+     * @param courseId course id
+     * @return message for the client
+     */
     public String showCourseProjects(String courseId){
         Gson gson = new Gson();
         String response = "";
-        for (String projectJson: db_projects.values()) {
-            Project project = gson.fromJson(projectJson, Project.class);
-            if(project.getCourseId().equals(courseId))
-                response += projectJson + " ";
+        Course course = gson.fromJson(db_courses.get(courseId), Course.class);
+
+        for (String projectId: course.getProjectIds()) {
+            String projectJson = db_projects.get(projectId);
+            response += projectJson + " ";
         }
         return response;
     }
 
+    /**
+     * Kafka settings for Course Producer
+     * @return Course Producer
+     */
+    private static KafkaProducer<String, String> setCourseProducer(){
+        final Properties producerProps = new Properties();
+        producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        producerProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        return new KafkaProducer<>(producerProps);
+    }
 }
