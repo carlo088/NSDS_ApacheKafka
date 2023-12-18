@@ -27,7 +27,7 @@ public class RegistrationService {
      * @param username username
      * @return message for the client
      */
-    public String showUserRegistrations(String username){
+    public String[] showUserRegistrations(String username){
         Gson gson = new Gson();
         String response = "";
         for (String registrationJson: db_registrations.values()) {
@@ -35,6 +35,6 @@ public class RegistrationService {
             if(registration.getUsername().equals(username))
                 response += registrationJson + " ";
         }
-        return response;
+        return response.split(" ");
     }
 }

@@ -7,6 +7,7 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -35,19 +36,19 @@ public class UserService {
      * @param userJson user json
      * @return message for the client
      */
-    public String newUser(String userJson){
+    public String[] newUser(String userJson){
         // get a User class from a Json file
         Gson gson = new Gson();
         User user = gson.fromJson(userJson, User.class);
 
         if (db_users.containsKey(user.getUsername()))
-            return "Username already exists";
+            return new String[]{"Username already exists"};
 
         // publish the record
         db_users.put(user.getUsername(), userJson);
         final ProducerRecord<String, String> newUser = new ProducerRecord<>("users", user.getUsername(), userJson);
         userProducer.send(newUser);
-        return "User " + user.getUsername() + " registered";
+        return new String[]{"User " + user.getUsername() + " registered"};
     }
 
     /**
@@ -55,7 +56,7 @@ public class UserService {
      * @param userJson user json
      * @return message for the client
      */
-    public String authenticateUser(String userJson) {
+    public String[] authenticateUser(String userJson) {
         // get a User class from a Json file
         Gson gson = new Gson();
         User user = gson.fromJson(userJson, User.class);
@@ -66,15 +67,15 @@ public class UserService {
             User storedUser = gson.fromJson(storedCredentials, User.class);
     
             if (user.getPassword().equals(storedUser.getPassword()) && storedUser.getRole().equals("STUDENT")) {
-                return "STUDENT_SUCCESS";
+                return new String[]{"STUDENT_SUCCESS"};
             }else if(user.getPassword().equals(storedUser.getPassword()) && storedUser.getRole().equals("PROFESSOR")){
-                return "PROFESSOR_SUCCESS";
+                return new String[]{"PROFESSOR_SUCCESS"};
             }
             else {
-                return "Incorrect password";
+                return new String[]{"Incorrect password"};
             }
         } else {
-            return "User not found";
+            return new String[]{"User not found"};
         }
     }
 
@@ -83,7 +84,7 @@ public class UserService {
      * @param username username
      * @return message for the client
      */
-    public String showUserCourses(String username){
+    public String[] showUserCourses(String username){
         if (db_users.containsKey(username)) {
             // get logged user
             String userJson = db_users.get(username);
@@ -97,9 +98,9 @@ public class UserService {
                 String courseJson = db_courses.get(courseID);
                 response += (courseJson + " ");
             }
-            return response;
+            return response.split(" ");
         } else {
-            return "User not found";
+            return new String[]{"User not found"};
         }
     }
 
@@ -109,12 +110,12 @@ public class UserService {
      * @param courseID course id
      * @return message for the client
      */
-    public synchronized String enrollCourse(String username, String courseID) {
+    public synchronized String[] enrollCourse(String username, String courseID) {
         if (!db_users.containsKey(username))
-            return "User not found";
+            return new String[]{"User not found"};
 
         if (!db_courses.containsKey(courseID))
-            return "Course not found";
+            return new String[]{"Course not found"};
 
         // Load user from db_users
         Gson gson = new Gson();
@@ -122,7 +123,7 @@ public class UserService {
 
         // if user isn't already enrolled, add the course
         if (user.getCourseIDs().contains(courseID))
-            return "User is already enrolled in this course";
+            return new String[]{"User is already enrolled in this course"};
 
         user.addCourseID(courseID);
 
@@ -132,7 +133,7 @@ public class UserService {
 
         final ProducerRecord<String, String> newUser = new ProducerRecord<>("users", user.getUsername(), userJson);
         userProducer.send(newUser);
-        return "Enrolled in course";
+        return new String[]{"Enrolled in course"};
     }
 
     /**

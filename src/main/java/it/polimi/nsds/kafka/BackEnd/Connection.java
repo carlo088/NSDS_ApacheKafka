@@ -42,7 +42,7 @@ public class Connection implements Runnable{
             // set socket streams
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
-            send("Connection established!\n");
+            send(new String[]{"Connection established!\n"});
 
             // connection is always waiting for requests from clients
             while(isActive){
@@ -61,7 +61,7 @@ public class Connection implements Runnable{
      * sends a response message to the client through the socket's output stream
      * @param message response message
      */
-    public void send(String message){
+    public void send(String[] message){
         try {
             if (!isActive) {
                 return;
@@ -79,33 +79,32 @@ public class Connection implements Runnable{
      * @throws ClassNotFoundException if there are problems with readObject() method
      */
     private void receive() throws IOException, ClassNotFoundException {
-        String request = (String) in.readObject();
-        String[] values = request.split(" ");
-        String requestType = values[0];
+        String[] request = (String[]) in.readObject();
+        String requestType = request[0];
 
         switch(requestType){
             case "REGISTER" :
-                String response = userService.newUser(values[1]);
+                String[] response = userService.newUser(request[1]);
                 send(response);
                 break;
             case "LOGIN":
-                response = userService.authenticateUser(values[1]);
+                response = userService.authenticateUser(request[1]);
                 send(response);
                 break;
             case "SHOW_USER_COURSES":
-                response = userService.showUserCourses(values[1]);
+                response = userService.showUserCourses(request[1]);
                 send(response);
                 break;
             case "ENROLL":
-                response = userService.enrollCourse(values[1], values[2]);
+                response = userService.enrollCourse(request[1], request[2]);
                 send(response);
                 break;
             case "POST":
-                response = courseService.newProject(values[1]);
+                response = courseService.newProject(request[1]);
                 send(response);
                 break;
             case "ADD_COURSE":
-                response = courseService.newCourse(values[1]);
+                response = courseService.newCourse(request[1]);
                 send(response);
                 break;
             case "SHOW_ALL_COURSES":
@@ -113,35 +112,35 @@ public class Connection implements Runnable{
                 send(response);
                 break;
             case "REMOVE_COURSE":
-                response = courseService.removeCourse(values[1]);
+                response = courseService.removeCourse(request[1]);
                 send(response);
                 break;
             case "SHOW_COURSE_PROJECTS":
-                response = courseService.showCourseProjects(values[1]);
+                response = courseService.showCourseProjects(request[1]);
                 send((response));
                 break;
             case "SUBMIT_NEW":
-                response = projectService.submitNewSolution(values[1]);
+                response = projectService.submitNewSolution(request[1]);
                 send(response);
                 break;
             case "SHOW_USER_SUBMISSIONS":
-                response = projectService.checkSubmissionStatus(values[1]);
+                response = projectService.checkSubmissionStatus(request[1]);
                 send(response);
                 break;
             case "SHOW_PROJECT_SUBMISSIONS":
-                response = projectService.showNewSubmissions(values[1]);
+                response = projectService.showNewSubmissions(request[1]);
                 send(response);
                 break;
             case "GRADE_SUBMISSION":
-                response = projectService.updateSubmissionGrade(values[1], Integer.parseInt(values[2]));
+                response = projectService.updateSubmissionGrade(request[1], Integer.parseInt(request[2]));
                 send(response);
                 break;
             case "SHOW_USER_REGISTRATIONS":
-                response = registrationService.showUserRegistrations(values[1]);
+                response = registrationService.showUserRegistrations(request[1]);
                 send(response);
                 break;
             default:
-                send("");
+                send(new String[]{""});
                 break;
         }
 

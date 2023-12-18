@@ -8,9 +8,7 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 
-import java.util.Map;
-import java.util.Properties;
-import java.util.Random;
+import java.util.*;
 
 public class CourseService {
     private final Map<String, String> db_courses;
@@ -30,7 +28,7 @@ public class CourseService {
      * @param courseJson course json
      * @return message for the client
      */
-    public String newCourse(String courseJson) {
+    public String[] newCourse(String courseJson) {
         // get a Course class from a Json file
         Gson gson = new Gson();
         Course course = gson.fromJson(courseJson, Course.class);
@@ -50,7 +48,7 @@ public class CourseService {
         db_courses.put(id, gson.toJson(course));
         final ProducerRecord<String, String> courseRecord = new ProducerRecord<>("courses", id, gson.toJson(course));
         courseProducer.send(courseRecord);
-        return "Course added correctly";
+        return new String[]{"Course added correctly"};
     }
 
     /**
@@ -58,26 +56,26 @@ public class CourseService {
      * @param courseId course id
      * @return message for the client
      */
-    public synchronized String removeCourse(String courseId){
+    public synchronized String[] removeCourse(String courseId){
         if (!db_courses.containsKey(courseId))
-            return "Course doesn't exists";
+            return new String[]{"Course doesn't exists"};
 
         db_courses.remove(courseId);
 
         //TODO: rimuovere record su Kafka e aggionrare db in UserService
-        return "Course removed correctly";
+        return new String[]{"Course removed correctly"};
     }
 
     /**
      * shows all existing courses
      * @return all the courses in json format
      */
-    public String showAllCourses(){
+    public String[] showAllCourses(){
         String response = "";
         for (String courseJson: db_courses.values()) {
             response += courseJson + " ";
         }
-        return response;
+        return response.split(" ");
     }
 
     /**
@@ -85,17 +83,17 @@ public class CourseService {
      * @param projectJson project json
      * @return message for the client
      */
-    public synchronized String newProject(String projectJson){
+    public synchronized String[] newProject(String projectJson){
         // get a Project class from a Json file
         Gson gson = new Gson();
         Project project = gson.fromJson(projectJson, Project.class);
 
         if(!db_courses.containsKey(project.getCourseId()))
-            return "Course doesn't exists";
+            return new String[]{"Course doesn't exists"};
 
         Course course = gson.fromJson(db_courses.get(project.getCourseId()), Course.class);
         if (course.getProjectIds().size() == course.getProjectNum())
-            return "You can't add more than " + course.getProjectNum() + " projects to this course";
+            return new String[]{"You can't add more than " + course.getProjectNum() + " projects to this course"};
 
         //generate key
         Random rand = new Random();
@@ -121,7 +119,7 @@ public class CourseService {
         db_projects.put(project.getId(), gson.toJson(project));
         final ProducerRecord<String, String> projectRecord = new ProducerRecord<>("projects", id, gson.toJson(project));
         courseProducer.send(projectRecord);
-        return "Project correctly posted";
+        return new String[]{"Project correctly posted"};
     }
 
     /**
@@ -129,15 +127,18 @@ public class CourseService {
      * @param courseId course id
      * @return message for the client
      */
-    public String showCourseProjects(String courseId){
+    public String[] showCourseProjects(String courseId){
         Gson gson = new Gson();
-        String response = "";
+        List<String> projects = new ArrayList<>();
         Course course = gson.fromJson(db_courses.get(courseId), Course.class);
 
         for (String projectId: course.getProjectIds()) {
             String projectJson = db_projects.get(projectId);
-            response += projectJson + " ";
+            projects.add(projectJson);
         }
+
+        String[] response = new String[projects.size()];
+        projects.toArray(response);
         return response;
     }
 

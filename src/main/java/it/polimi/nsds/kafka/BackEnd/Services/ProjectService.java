@@ -1,8 +1,6 @@
 package it.polimi.nsds.kafka.BackEnd.Services;
 
-import java.util.Map;
-import java.util.Properties;
-import java.util.Random;
+import java.util.*;
 
 import com.google.gson.Gson;
 import it.polimi.nsds.kafka.Beans.Submission;
@@ -30,7 +28,7 @@ public class ProjectService{
      * @param solutionJson solution json
      * @return message for the client
      */
-    public String submitNewSolution(String solutionJson) {
+    public String[] submitNewSolution(String solutionJson) {
         // get a submission class from a Json file
         Gson gson = new Gson();
         Submission submission = gson.fromJson(solutionJson, Submission.class);
@@ -55,13 +53,13 @@ public class ProjectService{
                 if (!db_submissions.containsKey(submissionId))
                     valid = true;
             }
-            submission.setId(submissionId);
         }
 
+        submission.setId(submissionId);
         db_submissions.put(submissionId, gson.toJson(submission));
         final ProducerRecord<String, String> submissionRecord = new ProducerRecord<>("submissions", submissionId, gson.toJson(submission));
         submissionProducer.send(submissionRecord);
-        return "Submission added correctly";
+        return new String[]{"Submission added correctly"};
     }
 
     /**
@@ -69,15 +67,18 @@ public class ProjectService{
      * @param projectId project id
      * @return message for the client
      */
-    public String showNewSubmissions(String projectId) {
-        StringBuilder response = new StringBuilder();
+    public String[] showNewSubmissions(String projectId) {
+        List<String> submissions = new ArrayList<>();
         for (String submissionJson : db_submissions.values()) {
             Submission submission = gson.fromJson(submissionJson, Submission.class);
             // Check if the submission has grade equal to -1 and matches the specified projectId
             if (submission.getGrade() == -1 && submission.getProjectId().equals(projectId))
-                response.append(submissionJson).append(" ");
+                submissions.add(submissionJson);
         }
-        return response.toString();
+
+        String[] response = new String[submissions.size()];
+        submissions.toArray(response);
+        return response;
     }
 
     /**
@@ -86,7 +87,7 @@ public class ProjectService{
      * @param grade grade
      * @return message for the client
      */
-    public String updateSubmissionGrade(String submissionID, int grade) {
+    public String[] updateSubmissionGrade(String submissionID, int grade) {
         if (db_submissions.containsKey(submissionID)) {
             String submissionJson = db_submissions.get(submissionID);
             Submission submission = gson.fromJson(submissionJson, Submission.class);
@@ -98,9 +99,9 @@ public class ProjectService{
             final ProducerRecord<String, String> submissionRecord = new ProducerRecord<>("submissions", submissionID, gson.toJson(submission));
             submissionProducer.send(submissionRecord);
             
-            return "Grade updated for Submission with ID " + submissionID;
+            return new String[]{"Grade updated for Submission with ID " + submissionID};
         } else {
-            return "Submission with ID " + submissionID + " not found";
+            return new String[]{"Submission with ID " + submissionID + " not found"};
         }
     }
 
@@ -109,16 +110,19 @@ public class ProjectService{
      * @param studentUsername username
      * @return message for the client
      */
-    public String checkSubmissionStatus(String studentUsername) {
-        StringBuilder response = new StringBuilder();
+    public String[] checkSubmissionStatus(String studentUsername) {
+        List<String> submissions = new ArrayList<>();
         for (String submissionJson : db_submissions.values()) {
             Submission submission = gson.fromJson(submissionJson, Submission.class);
             // Check if the submission belongs to the specified student
             if (submission.getStudentUsername().equals(studentUsername)) {
-                response.append(submissionJson).append(" ");
+                submissions.add(submissionJson);
             }
         }
-        return response.toString();
+
+        String[] response = new String[submissions.size()];
+        submissions.toArray(response);
+        return response;
     }
 
     /**

@@ -37,7 +37,7 @@ public class ClientInterface {
             in = new ObjectInputStream(socket.getInputStream());
 
             // start showing the interface
-            System.out.println(receive());
+            System.out.println(receive()[0]);
             homePage();
 
         } catch (IOException | ClassNotFoundException e) {
@@ -53,7 +53,7 @@ public class ClientInterface {
      * send a request to back-end through the socket's output stream
      * @param request request to send
      */
-    public static void send(String request){
+    public static void send(String[] request){
         try{
             out.writeObject(request);
             out.reset();
@@ -69,8 +69,8 @@ public class ClientInterface {
      * @throws IOException if there are IO problems
      * @throws ClassNotFoundException if there are problems with readObject() method
      */
-    private static String receive() throws IOException, ClassNotFoundException {
-        return (String) in.readObject();
+    private static String[] receive() throws IOException, ClassNotFoundException {
+        return (String[]) in.readObject();
     }
 
     private static void homePage() throws IOException, ClassNotFoundException {
@@ -222,8 +222,8 @@ public class ClientInterface {
         Gson gson = new Gson();
         String userJson = gson.toJson(user);
 
-        send("REGISTER" + " " + userJson);
-        System.out.println(receive());
+        send(new String[]{"REGISTER", userJson});
+        System.out.println(receive()[0]);
     }
 
     private static void login() throws IOException, ClassNotFoundException{
@@ -257,8 +257,8 @@ public class ClientInterface {
         Gson gson = new Gson();
         String userJson = gson.toJson(user);
 
-        send("LOGIN" + " " + userJson);
-        String response = receive();
+        send(new String[]{"LOGIN", userJson});
+        String response = receive()[0];
 
         if (response.equals("STUDENT_SUCCESS")) {
             System.out.println("Login successful!");
@@ -325,15 +325,15 @@ public class ClientInterface {
         Gson gson = new Gson();
         String courseJson = gson.toJson(course);
     
-        send("ADD_COURSE" + " " + courseJson);
-        System.out.println(receive());
+        send(new String[]{"ADD_COURSE", courseJson});
+        System.out.println(receive()[0]);
     }
 
 
     private static void removeCourse() throws IOException, ClassNotFoundException{
-        send("SHOW_ALL_COURSES");
-        String response = receive();
-        List<String> courses = new ArrayList<>(Arrays.asList(response.split(" ")));
+        send(new String[]{"SHOW_ALL_COURSES"});
+        String[] response = receive();
+        List<String> courses = new ArrayList<>(Arrays.asList(response));
 
         if (courses.isEmpty() || courses.get(0).equals("")){
             System.out.println("There are no available courses");
@@ -363,15 +363,14 @@ public class ClientInterface {
             }
         }
 
-        send("REMOVE_COURSE" + " " + selectedCourseID);
-        response = receive();
-        System.out.println(response);
+        send(new String[]{"REMOVE_COURSE", selectedCourseID});
+        System.out.println(receive()[0]);
     }
 
     private static void enrollCourse() throws IOException, ClassNotFoundException {
-        send("SHOW_ALL_COURSES");
-        String response = receive();
-        List<String> courses = new ArrayList<>(Arrays.asList(response.split(" ")));
+        send(new String[]{"SHOW_ALL_COURSES"});
+        String[] response = receive();
+        List<String> courses = new ArrayList<>(Arrays.asList(response));
 
         if (courses.isEmpty() || courses.get(0).equals("")){
             System.out.println("There are no available courses");
@@ -401,15 +400,15 @@ public class ClientInterface {
             }
         }
 
-        send("ENROLL"+ " " + usernameSession + " " + selectedCourseID);
-        String enrollResponse = receive();
+        send(new String[]{"ENROLL", usernameSession, selectedCourseID});
+        String enrollResponse = receive()[0];
         System.out.println(enrollResponse);
     }
 
     private static void submitSolution() throws IOException, ClassNotFoundException {
-        send("SHOW_USER_COURSES" + " " + usernameSession);
-        String response = receive();
-        List<String> courses = new ArrayList<>(Arrays.asList(response.split(" ")));
+        send(new String[]{"SHOW_USER_COURSES", usernameSession});
+        String[] response = receive();
+        List<String> courses = new ArrayList<>(Arrays.asList(response));
 
         if(courses.isEmpty() || courses.get(0).equals("")){
             System.out.println("There are no courses");
@@ -422,9 +421,9 @@ public class ClientInterface {
         for (String courseJson: courses) {
             Course course = gson.fromJson(courseJson, Course.class);
             System.out.println(course.getName());
-            send("SHOW_COURSE_PROJECTS" + " " + course.getId());
-            String resp = receive();
-            List<String> projects = new ArrayList<>(Arrays.asList(resp.split(" ")));
+            send(new String[]{"SHOW_COURSE_PROJECTS", course.getId()});
+            String[] resp = receive();
+            List<String> projects = new ArrayList<>(Arrays.asList(resp));
             if(projects.isEmpty() || projects.get(0).equals("")){
                 System.out.println("No projects available for this course");
             }
@@ -470,15 +469,15 @@ public class ClientInterface {
         Submission submission = new Submission(null, selectedProjectID, usernameSession, projectSolution, -1);
         String submissionJson = gson.toJson(submission);
 
-        send("SUBMIT_NEW"+ " " + submissionJson);
-        String projectSolutionResponse = receive();
+        send(new String[]{"SUBMIT_NEW", submissionJson});
+        String projectSolutionResponse = receive()[0];
         System.out.println(projectSolutionResponse);
     }
 
     private static void checkSubmission() throws IOException, ClassNotFoundException{
-        send("SHOW_USER_SUBMISSIONS" + " " + usernameSession);
-         String response = receive();
-         List<String> submissions = new ArrayList<>(Arrays.asList(response.split(" ")));
+        send(new String[]{"SHOW_USER_SUBMISSIONS", usernameSession});
+         String[] response = receive();
+         List<String> submissions = new ArrayList<>(Arrays.asList(response));
 
          if(submissions.isEmpty() || submissions.get(0).equals("")){
             System.out.println("There are no submissions");
@@ -524,9 +523,9 @@ public class ClientInterface {
     }
 
     private static void postProject()  throws IOException, ClassNotFoundException{
-        send("SHOW_ALL_COURSES");
-        String response = receive();
-        List<String> courses = new ArrayList<>(Arrays.asList(response.split(" ")));
+        send(new String[]{"SHOW_ALL_COURSES"});
+        String[] response = receive();
+        List<String> courses = new ArrayList<>(Arrays.asList(response));
 
         if(courses.isEmpty() || courses.get(0).equals("")){
             System.out.println("There are no courses");
@@ -575,14 +574,14 @@ public class ClientInterface {
         Project project = new Project(null, desc, courseID);
         String projectJson = gson.toJson(project);
 
-        send("POST" + " " + projectJson);
-        System.out.println(receive());
+        send(new String[]{"POST", projectJson});
+        System.out.println(receive()[0]);
     }
 
     private static void gradeSolution() throws IOException, ClassNotFoundException{
-        send("SHOW_ALL_COURSES");
-        String response = receive();
-        List<String> courses = new ArrayList<>(Arrays.asList(response.split(" ")));
+        send(new String[]{"SHOW_ALL_COURSES"});
+        String[] response = receive();
+        List<String> courses = new ArrayList<>(Arrays.asList(response));
 
         if (courses.isEmpty() || courses.get(0).equals("")){
             System.out.println("There are no available courses");
@@ -614,9 +613,9 @@ public class ClientInterface {
             }
         }
 
-        send("SHOW_COURSE_PROJECTS" + " " + courseID);
-        String resp = receive();
-        List<String> projects = new ArrayList<>(Arrays.asList(resp.split(" ")));
+        send(new String[]{"SHOW_COURSE_PROJECTS", courseID});
+        String[] resp = receive();
+        List<String> projects = new ArrayList<>(Arrays.asList(resp));
         List<String> projectIDs = new ArrayList<>();
 
         if(projects.isEmpty() || projects.get(0).equals("")){
@@ -645,9 +644,9 @@ public class ClientInterface {
             }
         }
 
-        send("SHOW_PROJECT_SUBMISSIONS" + " " + projectID);
+        send(new String[]{"SHOW_PROJECT_SUBMISSIONS", projectID});
         response = receive();
-        List<String> submissions = new ArrayList<>(Arrays.asList(response.split(" ")));
+        List<String> submissions = new ArrayList<>(Arrays.asList(response));
         List<String> submissionIDs = new ArrayList<>();
 
         if(submissions.isEmpty() || submissions.get(0).equals("")){
@@ -697,15 +696,14 @@ public class ClientInterface {
             }
         }
 
-        send("GRADE_SUBMISSION" + " " + submissionID + " " + grade);
-        response = receive();
-        System.out.println(response);
+        send(new String[]{"GRADE_SUBMISSION", submissionID, String.valueOf(grade)});
+        System.out.println(receive()[0]);
     }
 
     private static void showUserRegistrations() throws IOException, ClassNotFoundException {
-        send("SHOW_USER_REGISTRATIONS" + " " + usernameSession);
-        String response = receive();
-        List<String> registrations = new ArrayList<>(Arrays.asList(response.split(" ")));
+        send(new String[]{"SHOW_USER_REGISTRATIONS", usernameSession});
+        String[] response = receive();
+        List<String> registrations = new ArrayList<>(Arrays.asList(response));
 
         if(registrations.isEmpty() || registrations.get(0).equals("")){
             return;
