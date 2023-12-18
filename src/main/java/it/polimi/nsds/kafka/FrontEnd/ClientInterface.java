@@ -1,10 +1,7 @@
 package it.polimi.nsds.kafka.FrontEnd;
 
 import com.google.gson.Gson;
-import it.polimi.nsds.kafka.Beans.Course;
-import it.polimi.nsds.kafka.Beans.Project;
-import it.polimi.nsds.kafka.Beans.Submission;
-import it.polimi.nsds.kafka.Beans.User;
+import it.polimi.nsds.kafka.Beans.*;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -104,7 +101,7 @@ public class ClientInterface {
     }
 
     private static void adminPage() throws IOException, ClassNotFoundException {
-        System.out.println("\nADMIN Page:\n");
+        System.out.println("\nADMIN Page:");
         boolean exit = false;
         while(!exit){
             System.out.println("\nPlease press one of the following commands:");
@@ -128,7 +125,8 @@ public class ClientInterface {
     }
 
     private static void studentPage() throws IOException, ClassNotFoundException {
-        System.out.println("\nSTUDENT Page:\n");
+        System.out.println("\nSTUDENT Page:");
+        showUserRegistrations();
         boolean exit = false;
         while(!exit){
             System.out.println("\nPlease press one of the following commands:");
@@ -156,7 +154,7 @@ public class ClientInterface {
     }
 
     private static void professorPage() throws IOException, ClassNotFoundException{
-        System.out.println("\nPROFESSOR Page:\n");
+        System.out.println("\nPROFESSOR Page:");
         boolean exit = false;
         while(!exit){
             System.out.println("\nPlease press one of the following commands:");
@@ -313,10 +311,10 @@ public class ClientInterface {
             String numberOfProjectsInput = input.nextLine();
             try {
                 numberOfProjects = Integer.parseInt(numberOfProjectsInput);
-                if(numberOfProjects > 0)
+                if(numberOfProjects > 0 && numberOfProjects < 6)
                     valid = true;
                 else
-                    System.out.println("Number of projects must be more than zero");
+                    System.out.println("Number of projects must be more than zero and no more than five");
             } catch (NumberFormatException e) {
                 System.out.println("Invalid input. Please enter a valid number for projects.");
             }
@@ -681,15 +679,15 @@ public class ClientInterface {
         }
 
         int grade = -1;
+        Course selectedCourse = gson.fromJson(availableCourses.get(courseID), Course.class);
+        int maxGrade = 33 / selectedCourse.getProjectNum();
         valid = false;
         System.out.println("Insert the grade for this submission");
         while(!valid){
             try {
                 grade = Integer.parseInt(input.nextLine());
-
-                //TODO: choose grading system
-                if (grade > 5 || grade < 0){
-                    System.out.println("Invalid grade, try again");
+                if (grade > maxGrade || grade < 0){
+                    System.out.println("Grade has to be positive and less than " + maxGrade + ", try again");
                 }
                 else {
                     valid = true;
@@ -702,5 +700,23 @@ public class ClientInterface {
         send("GRADE_SUBMISSION" + " " + submissionID + " " + grade);
         response = receive();
         System.out.println(response);
+    }
+
+    private static void showUserRegistrations() throws IOException, ClassNotFoundException {
+        send("SHOW_USER_REGISTRATIONS" + " " + usernameSession);
+        String response = receive();
+        List<String> registrations = new ArrayList<>(Arrays.asList(response.split(" ")));
+
+        if(registrations.isEmpty() || registrations.get(0).equals("")){
+            return;
+        }
+
+        System.out.println("\nCompleted courses:\n");
+        Gson gson = new Gson();
+        for (String registrationJson: registrations) {
+            Registration registration = gson.fromJson(registrationJson, Registration.class);
+            System.out.println("COURSE = " + registration.getCourse() + " | GRADE = " + registration.getGrade() + " |");
+        }
+        System.out.println("\n");
     }
 }

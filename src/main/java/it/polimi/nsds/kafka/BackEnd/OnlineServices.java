@@ -52,7 +52,7 @@ public class OnlineServices {
         UserService userService = new UserService(db_users, db_courses);
         CourseService courseService = new CourseService(db_courses, db_projects);
         ProjectService projectService = new ProjectService(db_submissions);
-        RegistrationService registrationService = new RegistrationService(db_registrations);
+        RegistrationService registrationService = new RegistrationService(db_registrations, db_courses, db_submissions);
 
         System.out.println("OnlineServices listening on port: " + port);
         while(true){

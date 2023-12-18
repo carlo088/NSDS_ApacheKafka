@@ -34,19 +34,30 @@ public class ProjectService{
         // get a submission class from a Json file
         Gson gson = new Gson();
         Submission submission = gson.fromJson(solutionJson, Submission.class);
-    
-        // generate a key
-        Random rand = new Random();
+
+        // search for an old submission for this course by this student
         String submissionId = null;
-        boolean valid = false;
-        while (!valid) {
-            int randId = rand.nextInt(1001);
-            submissionId = String.valueOf(randId);
-            if (!db_submissions.containsKey(submissionId))
-                valid = true;
+        for (String submissionJson : db_submissions.values()) {
+            Submission sub = gson.fromJson(submissionJson, Submission.class);
+            if (sub.getProjectId().equals(submission.getProjectId()) && sub.getStudentUsername().equals(submission.getStudentUsername())){
+                submissionId = sub.getId();
+                break;
+            }
         }
-    
-        submission.setId(submissionId);
+
+        if(submissionId == null){
+            // generate a key
+            Random rand = new Random();
+            boolean valid = false;
+            while (!valid) {
+                int randId = rand.nextInt(1001);
+                submissionId = String.valueOf(randId);
+                if (!db_submissions.containsKey(submissionId))
+                    valid = true;
+            }
+            submission.setId(submissionId);
+        }
+
         db_submissions.put(submissionId, gson.toJson(submission));
         final ProducerRecord<String, String> submissionRecord = new ProducerRecord<>("submissions", submissionId, gson.toJson(submission));
         submissionProducer.send(submissionRecord);

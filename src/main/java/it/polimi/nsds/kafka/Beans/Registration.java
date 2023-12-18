@@ -1,10 +1,10 @@
 package it.polimi.nsds.kafka.Beans;
 
 public class Registration {
-    private String id;
-    private String username;
-    private String course;
-    private int grade;
+    private final String id;
+    private final String username;
+    private final String course;
+    private final int grade;
 
     public Registration(String id, String username, String course, int grade) {
         this.id = id;

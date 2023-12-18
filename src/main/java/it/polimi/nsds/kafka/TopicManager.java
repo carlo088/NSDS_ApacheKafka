@@ -1,9 +1,11 @@
 package it.polimi.nsds.kafka;
 
 import org.apache.kafka.clients.admin.*;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -14,7 +16,7 @@ public class TopicManager {
     private static KafkaConsumer<String, String> consumer;
 
     public static void main(String[] args) throws Exception {
-        consumer = Utils.setConsumer();
+        consumer = setConsumer();
 
         Properties props = new Properties();
         props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, serverAddr);
@@ -60,5 +62,15 @@ public class TopicManager {
 
         consumer.unsubscribe();
         return recordsMap;
+    }
+
+    private static KafkaConsumer<String, String> setConsumer(){
+        final Properties consumerProps = new Properties();
+        consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "groupA");
+        consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        return new KafkaConsumer<>(consumerProps);
     }
 }

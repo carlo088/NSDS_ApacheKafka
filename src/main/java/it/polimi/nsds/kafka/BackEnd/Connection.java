@@ -136,6 +136,10 @@ public class Connection implements Runnable{
                 response = projectService.updateSubmissionGrade(values[1], Integer.parseInt(values[2]));
                 send(response);
                 break;
+            case "SHOW_USER_REGISTRATIONS":
+                response = registrationService.showUserRegistrations(values[1]);
+                send(response);
+                break;
             default:
                 send("");
                 break;
