@@ -1,0 +1,19 @@
+# Log file
+*.log
+*.DS_Store
+
+
+# Compiled class file
+*.class
+
+# IntelliJ
+target/
+out/
+.idea/
+.idea_modules/
+*.iml
+*.ipr
+*.iws
+
+# VScode
+.vscode
