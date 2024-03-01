@@ -1,0 +1,19 @@
+[
+    {
+        "id": "aef7ae8b.637dd",
+        "type": "function",
+        "z": "9206241c.eddcf8",
+        "name": "convertToJSObject",
+        "func": "var timestampString = msg.payload.substring(0, 24); // Assuming the timestamp is the first 24 characters\nvar timestamp = new Date(timestampString);\nvar peopleArray = JSON.parse(msg.payload.substring(25)); // Assuming the timestamp is followed by a space\n\n// Extract deviceIDs from the people array\nvar deviceIDs = peopleArray.map(function(person) {\n    return person.deviceID;\n}).join(\"-\");\n\n// Create an array representing the data for CSV with three columns: timestamp, members, and cardinality\nvar csvData = [\n    [timestamp.toISOString(), deviceIDs, \"1\"] // Each array represents a row in the CSV file\n];\n\n// msg.payload ={\n//     'timestamp' : timestamp.toISOString(), \n//     'members' : deviceIDs, \n//     'cardinality' : 3};\n\n\nmsg.payload = csvData.toString()\n\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 510,
+        "y": 160,
+        "wires": [
+            [
+                "48e85418.62fd6c",
+                "828711f8.9452b"
+            ]
+        ]
+    }
+]
