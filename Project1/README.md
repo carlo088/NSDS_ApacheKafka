@@ -86,7 +86,7 @@ Properties: no destination IP and port information needed, payload agnostic. Com
 
 NodeRed nodes are provided to use MQTT as an input by expressing subscriptions, or as an output to publish messages. Messages are *strings*, no need of explict JSON node, everything is done automatically.
 
-**Port where UDP or MQTT is listening is port where COOJA is, this will in the project. Look slides for example**.
+**Port where UDP or MQTT is listening is port where COOJA is, this will be the case of the project. Look slides for example**.
 
 ## Implementation - NodeRed
 Backend of project. Flow recieves and processes messagges, MQTT communication follow the publish and subscribe messaging pattern: each mote subscribe to a topic.
@@ -98,19 +98,25 @@ Backend recieves:
 	- payload: list of 3 people
 2. Message on **change of cardinality**
 	- topic: cardinality
-	- payload: 
+	- payload: list of n people?
 
-Open Questions:
+Open Questions (suppose Contiki, like in the repo, sends contacts between devices i.e. list of n people):
 
-1. Each person is an object containing: deviceID, nationality, age
-2. For topic cardinality, shall I recieve ID group or another list of people?
-2. Who creates and holds group ID? How to distinguish grouos?
+1. NodeRed recieves only 1 type of message pr 2?
+2. Case of 2 messages, what does 1st message contain? Each person is an object containing: deviceID, nationality, age? And also cardnality is part of the message?
+3. For topic cardinality, shall I recieve another list of people (One would rather not introduce a groupID)?
+4. It is enough to use only 1 database?
+5. In case groupID: who creates and holds group ID? How to distinguish groups?
 
 -
 
 Two event-driven flows, one for `group` and other for `cardinality`. For both first node is MQTT reciever.
 
 To copy .csv from docker container to local environment `docker cp mynodered:/data/output.csv /Users/Carlo/Desktop/POLITECNICO/NSDS/NSDS_Projects_2024/Project1/data`
+
+To initialize `output.csv` inside `/data`: get into docker container `docker exec -it XXX /bin/bash` the navigate to `/data` and `rm output.csv`. Then run `echo "groupID,listOfPeople,nationality,age,dateJoined,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality" > output.csv`.
+
+`docker exec -it ca7bfbf5c7e4  /bin/bash -c "cd /data && rm output.csv && echo 'groupID,listOfPeople,nationality,age,dateJoined,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality' > output.csv"`
 
 
 Message: `{"topic":"Hello",`
