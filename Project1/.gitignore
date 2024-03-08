@@ -1,3 +1,4 @@
 target/
 data/groups.csv
 data/people.csv
+*.DS_Store
