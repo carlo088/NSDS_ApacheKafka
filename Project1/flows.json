@@ -1,19 +1,708 @@
 [
     {
+        "id": "9206241c.eddcf8",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "2d49513f.291dfe",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "mqtt.neslab.it",
+        "port": "3200",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": false,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": ""
+    },
+    {
+        "id": "4c59f7b1.f86108",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "mqtt.neslab.it",
+        "port": "3200",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": false,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": ""
+    },
+    {
+        "id": "d908a765.f7df18",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "mqtt.neslab.it",
+        "port": "3200",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": false,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": ""
+    },
+    {
+        "id": "ed7e0abe.d2a398",
+        "type": "inject",
+        "z": "9206241c.eddcf8",
+        "name": "Simulate createGroups",
+        "topic": "Project1/createGroup",
+        "payload": "Hello World",
+        "payloadType": "str",
+        "repeat": "36000",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 150,
+        "y": 120,
+        "wires": [
+            [
+                "e286fe6.fcbbf",
+                "cbf02d4b.72d16"
+            ]
+        ]
+    },
+    {
+        "id": "ec997801.3828a8",
+        "type": "mqtt in",
+        "z": "9206241c.eddcf8",
+        "name": "Project1/groups",
+        "topic": "Project1/createGroup",
+        "qos": "1",
+        "datatype": "auto",
+        "broker": "2d49513f.291dfe",
+        "x": 240,
+        "y": 260,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "828711f8.9452b",
+        "type": "file",
+        "z": "9206241c.eddcf8",
+        "name": "writeToCsv",
+        "filename": "/data/output.csv",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 790,
+        "y": 280,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e286fe6.fcbbf",
+        "type": "function",
+        "z": "9206241c.eddcf8",
+        "name": "simulateMQTT1",
+        "func": "var people = [\n    { deviceID: \"56\", nationality: \"Italy\", age: 30 },\n    { deviceID: \"85\", nationality: \"Argentina\", age: 25 },\n    { deviceID: \"93\", nationality: \"Italy\", age: 40 }\n];\n\nvar peopleString = JSON.stringify(people);\n\nvar timestampString = new Date().toISOString();\n\nvar combinedString = timestampString + \" \" + peopleString;\n\nmsg.payload = combinedString;\n\nvar timestampString = msg.payload.substring(0, 24);\nvar timestamp = new Date(timestampString);\nvar peopleArray = JSON.parse(msg.payload.substring(25)); \n\n// Extract deviceIDs, nationalities, and ages from the people array\nvar deviceIDs = peopleArray.map(function(person) {\n    return person.deviceID;\n}).join(\"-\");\n\nvar nationalities = peopleArray.map(function(person) {\n    return person.nationality;\n}).join(\",\");\n\nvar ages = peopleArray.map(function(person) {\n    return person.age;\n}).join(\",\");\n\n\nvar payloadObj = {\n    groupID: 1,\n    timestamp: timestamp.toISOString(),\n    members: deviceIDs,\n    nationalities: nationalities,\n    ages: ages,\n    cardinality: 3,\n};\n\nmsg.payload = JSON.stringify(payloadObj);\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 240,
+        "y": 180,
+        "wires": [
+            [
+                "aef7ae8b.637dd",
+                "9a40dd9b.3bdff"
+            ]
+        ]
+    },
+    {
         "id": "aef7ae8b.637dd",
         "type": "function",
         "z": "9206241c.eddcf8",
         "name": "convertToJSObject",
-        "func": "var timestampString = msg.payload.substring(0, 24); // Assuming the timestamp is the first 24 characters\nvar timestamp = new Date(timestampString);\nvar peopleArray = JSON.parse(msg.payload.substring(25)); // Assuming the timestamp is followed by a space\n\n// Extract deviceIDs from the people array\nvar deviceIDs = peopleArray.map(function(person) {\n    return person.deviceID;\n}).join(\"-\");\n\n// Create an array representing the data for CSV with three columns: timestamp, members, and cardinality\nvar csvData = [\n    [timestamp.toISOString(), deviceIDs, \"1\"] // Each array represents a row in the CSV file\n];\n\n// msg.payload ={\n//     'timestamp' : timestamp.toISOString(), \n//     'members' : deviceIDs, \n//     'cardinality' : 3};\n\n\nmsg.payload = csvData.toString()\n\n\nreturn msg;",
+        "func": "var inputString = msg.payload;\n\n// Parse the string to convert it to a JavaScript object\nvar parsedObject = JSON.parse(inputString);\n\n// Now, parsedObject contains the JavaScript object\nmsg.payload = parsedObject;\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
-        "x": 510,
+        "x": 570,
         "y": 160,
         "wires": [
             [
-                "48e85418.62fd6c",
+                "493c35ea.ffaabc"
+            ]
+        ]
+    },
+    {
+        "id": "9a40dd9b.3bdff",
+        "type": "debug",
+        "z": "9206241c.eddcf8",
+        "name": "Print",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 460,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "493c35ea.ffaabc",
+        "type": "function",
+        "z": "9206241c.eddcf8",
+        "name": "prepareNewCsvLine",
+        "func": "// Extract data from msg.payload\nconst { groupID, timestamp, members, nationalities, ages, cardinality } = msg.payload;\n\n// Rename timestamp to dateJoined\nconst dateJoined = timestamp;\n\n// Add additional columns\nconst lifetime = 0;\nconst currentCardinality = 3;\nconst minCardinality = 3;\nconst maxCardinality = 3;\nconst averageCardinality = 3;\nconst nChangeCardinality = 1;\n\n// Combine members, nationalities, and ages into single cells\nconst combinedMembers = members.split('-').join(',');\nconst combinedNationalities = nationalities.split(',').join(',');\nconst combinedAges = ages.split(',').join(',');\n\n// Construct the CSV row\nconst csvRow = `${groupID},\"${combinedMembers}\",\"${combinedNationalities}\",\"${combinedAges}\",\"${dateJoined}\",${lifetime},${currentCardinality},${minCardinality},${maxCardinality},${averageCardinality},${nChangeCardinality}`;\n\n// Pass the CSV row to the next node\nmsg.payload = csvRow;\n\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 560,
+        "y": 280,
+        "wires": [
+            [
+                "795bcec2.d92cf",
                 "828711f8.9452b"
             ]
         ]
+    },
+    {
+        "id": "c3a248fd.1716d8",
+        "type": "file in",
+        "z": "9206241c.eddcf8",
+        "name": "Read",
+        "filename": "/data/output.csv",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "x": 210,
+        "y": 460,
+        "wires": [
+            [
+                "1ee14a63.11e396"
+            ]
+        ]
+    },
+    {
+        "id": "1ee14a63.11e396",
+        "type": "csv",
+        "z": "9206241c.eddcf8",
+        "name": "read",
+        "sep": ",",
+        "hdrin": true,
+        "hdrout": "",
+        "multi": "mult",
+        "ret": "\\n",
+        "temp": "groupID,listOfPeople,nationality,age,dateJoined,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality",
+        "skip": "0",
+        "strings": false,
+        "x": 330,
+        "y": 460,
+        "wires": [
+            [
+                "d1bf3d7b.c7089"
+            ]
+        ]
+    },
+    {
+        "id": "3d2f9202.f755ee",
+        "type": "inject",
+        "z": "9206241c.eddcf8",
+        "name": "Simulate addMember",
+        "topic": "Project1/addMember",
+        "payload": "Hello World",
+        "payloadType": "str",
+        "repeat": "36000",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 140,
+        "y": 360,
+        "wires": [
+            [
+                "5e7b08c1.0dc0a8",
+                "c3a248fd.1716d8"
+            ]
+        ]
+    },
+    {
+        "id": "5e7b08c1.0dc0a8",
+        "type": "function",
+        "z": "9206241c.eddcf8",
+        "name": "simulateMQTT",
+        "func": "var people = [\n    { deviceID: \"56\", nationality: \"Italy\", age: 30 },\n    { deviceID: \"85\", nationality: \"Argentina\", age: 25 },\n    { deviceID: \"93\", nationality: \"Italy\", age: 40 },\n    { deviceID: \"42\", nationality: \"Italy\", age: 20 }\n];\n\nvar peopleString = JSON.stringify(people);\n\nvar timestampString = new Date().toISOString();\n\nvar combinedString = timestampString + \" \" + peopleString;\n\nmsg.payload = combinedString;\n\nvar timestampString = msg.payload.substring(0, 24);\nvar timestamp = new Date(timestampString);\nvar peopleArray = JSON.parse(msg.payload.substring(25)); \n\n// Extract deviceIDs, nationalities, and ages from the people array\nvar deviceIDs = peopleArray.map(function(person) {\n    return person.deviceID;\n}).join(\"-\");\n\nvar nationalities = peopleArray.map(function(person) {\n    return person.nationality;\n}).join(\",\");\n\nvar ages = peopleArray.map(function(person) {\n    return person.age;\n}).join(\",\");\n\n\nvar payloadObj = {\n    groupID: 1,\n    timestamp: timestamp.toISOString(),\n    members: deviceIDs,\n    nationalities: nationalities,\n    ages: ages,\n    cardinality: 4,\n};\n\nmsg.payload = JSON.stringify(payloadObj);\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 240,
+        "y": 420,
+        "wires": [
+            [
+                "8f676722.f56c18",
+                "2a896508.b33cfa"
+            ]
+        ]
+    },
+    {
+        "id": "8f676722.f56c18",
+        "type": "function",
+        "z": "9206241c.eddcf8",
+        "name": "convertToJSObject",
+        "func": "var inputString = msg.payload;\n\n// Parse the string to convert it to a JavaScript object\nvar parsedObject = JSON.parse(inputString);\n\n// Now, parsedObject contains the JavaScript object\nmsg.payload = parsedObject;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 430,
+        "y": 420,
+        "wires": [
+            [
+                "d1bf3d7b.c7089"
+            ]
+        ]
+    },
+    {
+        "id": "d1bf3d7b.c7089",
+        "type": "join",
+        "z": "9206241c.eddcf8",
+        "name": "",
+        "mode": "custom",
+        "build": "array",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": false,
+        "timeout": "",
+        "count": "2",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 610,
+        "y": 440,
+        "wires": [
+            [
+                "d91a9d47.e1642"
+            ]
+        ]
+    },
+    {
+        "id": "93761a5f.427a88",
+        "type": "function",
+        "z": "9206241c.eddcf8",
+        "name": "checkGroupIDExistence",
+        "func": "const firstGroupID = msg.payload[0].groupID;\n\nlet matchFound = false;\nlet matchingIndex = -1;\n\n// Iterate over the objects in the second array\nfor (let i = 0; i < msg.payload[1].length; i++) {\n    const groupIdInt = parseInt(msg.payload[1][i].groupID);\n    if (groupIdInt === firstGroupID) {\n        matchFound = true;\n        matchingIndex = i;\n        break;\n    }\n}\n\nif (!matchFound) {\n    msg.payload = {\n        error: \"Error: No matching groupID found\",\n        index: matchingIndex\n    };\n    return [msg, null];\n} else {\n    return [null, { payload: msg.payload, index: matchingIndex }];\n}\n",
+        "outputs": 2,
+        "noerr": 0,
+        "x": 1150,
+        "y": 620,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "795bcec2.d92cf",
+        "type": "debug",
+        "z": "9206241c.eddcf8",
+        "name": "printNewCsvLine",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 810,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "d91a9d47.e1642",
+        "type": "function",
+        "z": "9206241c.eddcf8",
+        "name": "prepareNewCsvLine",
+        "func": "// Extract data from msg.payload\nconst newLine = msg.payload[0];\nconst oldLines = msg.payload[1];\n\n// Extract groupID from the newLine object\nconst newGroupID = newLine.groupID;\n\nconst columnHeaders = \"groupID,listOfPeople,nationality,age,dateJoined,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality\";\n\n// Initialize an array to store all CSV rows\nconst allCsvRows = [];\nallCsvRows.push(columnHeaders);\n\nlet matchFound = false;\nlet matchingIndex = -1;\n\n// Iterate over the objects in the second array to find matching groupID\nfor (let i = 0; i < oldLines.length; i++) {\n    const groupIdInt = parseInt(oldLines[i].groupID);\n    if (groupIdInt === newGroupID) {\n        matchingIndex = i;\n        matchFound = true;\n        break;\n    }\n}\nnode.warn(\"matchingIndex: \" + matchingIndex);\n\nif (!matchFound) {\n    // No matching groupID found\n    msg.payload = {\n        error: \"Error: No matching groupID found\"\n    };\n    return [msg, null];\n}\n\n\n\nfor (let i = 0; i < oldLines.length; i++) {\n    \n    let groupIdInt = parseInt(oldLines[i].groupID);\n    \n    if (i === matchingIndex) {\n\n        // Construct modified CSV row for the matching index\n        const { groupID, timestamp, members, nationalities, ages, cardinality } = newLine;\n        const { dateJoined, lifetime, currentCardinality, minCardinality, maxCardinality, averageCardinality, nChangeCardinality } = oldLines[i];\n\n        // Initialize variables for minCardinality and maxCardinality\n        let newMinCardinality = parseInt(minCardinality);\n        let newMaxCardinality = parseInt(maxCardinality);\n\n        // Check if the new cardinality is less than the current minCardinality\n        if (parseInt(cardinality) < newMinCardinality || isNaN(newMinCardinality)) {\n            newMinCardinality = parseInt(cardinality);\n        }\n\n        // Check if the new cardinality is greater than the current maxCardinality\n        if (parseInt(cardinality) > newMaxCardinality || isNaN(newMaxCardinality)) {\n            newMaxCardinality = parseInt(cardinality);\n        }\n\n        // Calculate new averageCardinality and nChangeCardinality\n        const newNChangeCardinality = parseInt(nChangeCardinality) + 1;\n        const newAverageCardinality = ((parseFloat(averageCardinality) * parseInt(nChangeCardinality)) + parseInt(cardinality)) / newNChangeCardinality;\n        const newCurrentCardinality = parseInt(currentCardinality) + 1;\n\n        // Combine members, nationalities, and ages into single cells\n        const combinedMembers = members.split('-').join(',');\n        const combinedNationalities = nationalities.split(',').join(',');\n        const combinedAges = ages.split(',').join(',');\n\n        // Calculate new lifetime in seconds\n        const timestampDate = new Date(timestamp);\n        const dateJoinedDate = new Date(dateJoined);\n\n        const differenceInSeconds = (timestampDate - dateJoinedDate) / 1000; // Convert milliseconds to seconds\n\n        const lifetimeSeconds = parseFloat(lifetime) + differenceInSeconds;\n\n        // Construct the modified CSV row\n        const modifiedCsvRow = `${groupID},\"${combinedMembers}\",\"${combinedNationalities}\",\"${combinedAges}\",\"${dateJoined}\",${lifetimeSeconds},${newCurrentCardinality},${newMinCardinality},${newMaxCardinality},${newAverageCardinality},${newNChangeCardinality}`;\n        \n        // Push the modified CSV row to the array\n        allCsvRows.push(modifiedCsvRow);\n        \n    } else {\n        // Construct CSV row for other lines\n        const { groupID, dateJoined, lifetime, currentCardinality, minCardinality, maxCardinality, averageCardinality, nChangeCardinality } = oldLines[i];\n\n        // Construct the CSV row for the line\n        const csvRow = `${groupID},\"${oldLines[i].listOfPeople}\",\"${oldLines[i].nationality}\",\"${oldLines[i].age}\",\"${dateJoined}\",${lifetime},${currentCardinality},${minCardinality},${maxCardinality},${averageCardinality},${nChangeCardinality}`;\n        \n        // Push the CSV row to the array\n        allCsvRows.push(csvRow);\n    }\n}\n\n// Pass all CSV rows to the next node\nmsg.payload = allCsvRows.join('\\n');\n\nreturn [null, msg];\n",
+        "outputs": 2,
+        "noerr": 0,
+        "x": 360,
+        "y": 660,
+        "wires": [
+            [
+                "83943cad.65dd5"
+            ],
+            [
+                "2ccea458.e8d29c",
+                "7606e879.8532d8"
+            ]
+        ]
+    },
+    {
+        "id": "2ccea458.e8d29c",
+        "type": "debug",
+        "z": "9206241c.eddcf8",
+        "name": "printNewCsvLine",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 730,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "7606e879.8532d8",
+        "type": "file",
+        "z": "9206241c.eddcf8",
+        "name": "writeToCsv",
+        "filename": "/data/output.csv",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "true",
+        "encoding": "none",
+        "x": 710,
+        "y": 720,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "f1313cff.c383e",
+        "type": "mqtt in",
+        "z": "9206241c.eddcf8",
+        "name": "Project1/addMember",
+        "topic": "Project1/addMember",
+        "qos": "1",
+        "datatype": "auto",
+        "broker": "2d49513f.291dfe",
+        "x": 260,
+        "y": 500,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "721d39ee.33c8a8",
+        "type": "file in",
+        "z": "9206241c.eddcf8",
+        "name": "Read",
+        "filename": "/data/output.csv",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "x": 210,
+        "y": 860,
+        "wires": [
+            [
+                "50d0eda4.5b2044"
+            ]
+        ]
+    },
+    {
+        "id": "50d0eda4.5b2044",
+        "type": "csv",
+        "z": "9206241c.eddcf8",
+        "name": "read",
+        "sep": ",",
+        "hdrin": true,
+        "hdrout": "",
+        "multi": "mult",
+        "ret": "\\n",
+        "temp": "groupID,listOfPeople,nationality,age,dateJoined,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality",
+        "skip": "0",
+        "strings": false,
+        "x": 330,
+        "y": 860,
+        "wires": [
+            [
+                "2fa03515.aa92ba"
+            ]
+        ]
+    },
+    {
+        "id": "c915ddd7.e71bf",
+        "type": "inject",
+        "z": "9206241c.eddcf8",
+        "name": "Simulate removeMember",
+        "topic": "Project1/removeMember",
+        "payload": "Hello World",
+        "payloadType": "str",
+        "repeat": "36000",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 160,
+        "y": 760,
+        "wires": [
+            [
+                "b1e40e50.9101d",
+                "721d39ee.33c8a8"
+            ]
+        ]
+    },
+    {
+        "id": "b1e40e50.9101d",
+        "type": "function",
+        "z": "9206241c.eddcf8",
+        "name": "simulateMQTT",
+        "func": "var people = [\n    { deviceID: \"85\", nationality: \"Argentina\", age: 25 },\n    { deviceID: \"93\", nationality: \"Italy\", age: 40 },\n    { deviceID: \"42\", nationality: \"Italy\", age: 20 }\n];\n\nvar peopleString = JSON.stringify(people);\n\nvar timestampString = new Date().toISOString();\n\nvar combinedString = timestampString + \" \" + peopleString;\n\nmsg.payload = combinedString;\n\nvar timestampString = msg.payload.substring(0, 24);\nvar timestamp = new Date(timestampString);\nvar peopleArray = JSON.parse(msg.payload.substring(25)); \n\n// Extract deviceIDs, nationalities, and ages from the people array\nvar deviceIDs = peopleArray.map(function(person) {\n    return person.deviceID;\n}).join(\"-\");\n\nvar nationalities = peopleArray.map(function(person) {\n    return person.nationality;\n}).join(\",\");\n\nvar ages = peopleArray.map(function(person) {\n    return person.age;\n}).join(\",\");\n\n\nvar payloadObj = {\n    groupID: 1,\n    timestamp: timestamp.toISOString(),\n    members: deviceIDs,\n    nationalities: nationalities,\n    ages: ages,\n    cardinality: 3,\n};\n\nmsg.payload = JSON.stringify(payloadObj);\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 240,
+        "y": 820,
+        "wires": [
+            [
+                "142970da.9d149f",
+                "8f66f08e.bad4d"
+            ]
+        ]
+    },
+    {
+        "id": "142970da.9d149f",
+        "type": "function",
+        "z": "9206241c.eddcf8",
+        "name": "convertToJSObject",
+        "func": "var inputString = msg.payload;\n\n// Parse the string to convert it to a JavaScript object\nvar parsedObject = JSON.parse(inputString);\n\n// Now, parsedObject contains the JavaScript object\nmsg.payload = parsedObject;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 430,
+        "y": 820,
+        "wires": [
+            [
+                "2fa03515.aa92ba"
+            ]
+        ]
+    },
+    {
+        "id": "2fa03515.aa92ba",
+        "type": "join",
+        "z": "9206241c.eddcf8",
+        "name": "",
+        "mode": "custom",
+        "build": "array",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": false,
+        "timeout": "",
+        "count": "2",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 610,
+        "y": 840,
+        "wires": [
+            [
+                "2cda12e5.53b7ee"
+            ]
+        ]
+    },
+    {
+        "id": "140f185f.f87198",
+        "type": "function",
+        "z": "9206241c.eddcf8",
+        "name": "checkGroupIDExistence",
+        "func": "const firstGroupID = msg.payload[0].groupID;\n\nlet matchFound = false;\n\n// Iterate over the rest of the objects in the array\nfor (let i = 1; i < msg.payload.length; i++) {\n    if (msg.payload[i].groupID === firstGroupID) {\n        matchFound = true;\n        break;\n    }\n}\n\nif (matchFound) {\n    msg.payload = \"Error, not groupID match found\";\n    return [msg, null];\n} else {\n    // TODO: only pass oldLine and newLine, not all Lines\n    msg.payload = msg.payload;\n    return [null, msg];\n}\n",
+        "outputs": 2,
+        "noerr": 0,
+        "x": 950,
+        "y": 980,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "2cda12e5.53b7ee",
+        "type": "function",
+        "z": "9206241c.eddcf8",
+        "name": "prepareNewCsvLine",
+        "func": "// Extract data from msg.payload\nconst newLine = msg.payload[0];\nconst oldLines = msg.payload[1];\n\n// Extract groupID from the newLine object\nconst newGroupID = newLine.groupID;\n\nconst columnHeaders = \"groupID,listOfPeople,nationality,age,dateJoined,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality\";\n\n// Initialize an array to store all CSV rows\nconst allCsvRows = [];\nallCsvRows.push(columnHeaders);\n\nlet matchFound = false;\nlet matchingIndex = -1;\n\n// Iterate over the objects in the second array to find matching groupID\nfor (let i = 0; i < oldLines.length; i++) {\n    const groupIdInt = parseInt(oldLines[i].groupID);\n    if (groupIdInt === newGroupID) {\n        matchingIndex = i;\n        matchFound = true;\n        break;\n    }\n}\nnode.warn(\"matchingIndex: \" + matchingIndex);\n\nif (!matchFound) {\n    // No matching groupID found\n    msg.payload = {\n        error: \"Error: No matching groupID found\"\n    };\n    return [msg, null];\n}\n\n\n\nfor (let i = 0; i < oldLines.length; i++) {\n    \n    let groupIdInt = parseInt(oldLines[i].groupID);\n    \n    if (i === matchingIndex) {\n\n        // Construct modified CSV row for the matching index\n        const { groupID, timestamp, members, nationalities, ages, cardinality } = newLine;\n        const { dateJoined, lifetime, currentCardinality, minCardinality, maxCardinality, averageCardinality, nChangeCardinality } = oldLines[i];\n\n        // Initialize variables for minCardinality and maxCardinality\n        let newMinCardinality = parseInt(minCardinality);\n        let newMaxCardinality = parseInt(maxCardinality);\n\n        // Check if the new cardinality is less than the current minCardinality\n        if (parseInt(cardinality) < newMinCardinality || isNaN(newMinCardinality)) {\n            newMinCardinality = parseInt(cardinality);\n        }\n\n        // Check if the new cardinality is greater than the current maxCardinality\n        if (parseInt(cardinality) > newMaxCardinality || isNaN(newMaxCardinality)) {\n            newMaxCardinality = parseInt(cardinality);\n        }\n\n        // Calculate new averageCardinality and nChangeCardinality\n        const newNChangeCardinality = parseInt(nChangeCardinality) + 1;\n        const newAverageCardinality = ((parseFloat(averageCardinality) * parseInt(nChangeCardinality)) + parseInt(cardinality)) / newNChangeCardinality;\n        const newCurrentCardinality = parseInt(currentCardinality) - 1;\n\n        // Combine members, nationalities, and ages into single cells\n        const combinedMembers = members.split('-').join(',');\n        const combinedNationalities = nationalities.split(',').join(',');\n        const combinedAges = ages.split(',').join(',');\n\n        // Calculate new lifetime in seconds\n        const timestampDate = new Date(timestamp);\n        const dateJoinedDate = new Date(dateJoined);\n\n        const differenceInSeconds = (timestampDate - dateJoinedDate) / 1000; // Convert milliseconds to seconds\n\n        const lifetimeSeconds = parseFloat(lifetime) + differenceInSeconds;\n\n        // Construct the modified CSV row\n        const modifiedCsvRow = `${groupID},\"${combinedMembers}\",\"${combinedNationalities}\",\"${combinedAges}\",\"${dateJoined}\",${lifetimeSeconds},${newCurrentCardinality},${newMinCardinality},${newMaxCardinality},${newAverageCardinality},${newNChangeCardinality}`;\n        \n        // Push the modified CSV row to the array\n        allCsvRows.push(modifiedCsvRow);\n        \n    } else {\n        // Construct CSV row for other lines\n        const { groupID, dateJoined, lifetime, currentCardinality, minCardinality, maxCardinality, averageCardinality, nChangeCardinality } = oldLines[i];\n\n        // Construct the CSV row for the line\n        const csvRow = `${groupID},\"${oldLines[i].listOfPeople}\",\"${oldLines[i].nationality}\",\"${oldLines[i].age}\",\"${dateJoined}\",${lifetime},${currentCardinality},${minCardinality},${maxCardinality},${averageCardinality},${nChangeCardinality}`;\n        \n        // Push the CSV row to the array\n        allCsvRows.push(csvRow);\n    }\n}\n\n// Pass all CSV rows to the next node\nmsg.payload = allCsvRows.join('\\n');\n\nreturn [null, msg];",
+        "outputs": 2,
+        "noerr": 0,
+        "x": 360,
+        "y": 1060,
+        "wires": [
+            [
+                "89fe624c.18c0d"
+            ],
+            [
+                "2f16d093.8424a",
+                "ea85abd2.a84ae8"
+            ]
+        ]
+    },
+    {
+        "id": "2f16d093.8424a",
+        "type": "debug",
+        "z": "9206241c.eddcf8",
+        "name": "printNewCsvLine",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 730,
+        "y": 1060,
+        "wires": []
+    },
+    {
+        "id": "ea85abd2.a84ae8",
+        "type": "file",
+        "z": "9206241c.eddcf8",
+        "name": "writeToCsv",
+        "filename": "/data/output.csv",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "true",
+        "encoding": "none",
+        "x": 710,
+        "y": 1120,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "744da74d.b85258",
+        "type": "mqtt in",
+        "z": "9206241c.eddcf8",
+        "name": "Project1/removeMember",
+        "topic": "Project1/addMember",
+        "qos": "1",
+        "datatype": "auto",
+        "broker": "2d49513f.291dfe",
+        "x": 270,
+        "y": 900,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "2a896508.b33cfa",
+        "type": "debug",
+        "z": "9206241c.eddcf8",
+        "name": "Print",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 450,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "8f66f08e.bad4d",
+        "type": "debug",
+        "z": "9206241c.eddcf8",
+        "name": "Print",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 410,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "cbf02d4b.72d16",
+        "type": "function",
+        "z": "9206241c.eddcf8",
+        "name": "simulateMQTT2",
+        "func": "var people = [\n    { deviceID: \"20\", nationality: \"Germany\", age: 40 },\n    { deviceID: \"36\", nationality: \"US\", age: 20 },\n    { deviceID: \"41\", nationality: \"Italy\", age: 55 }\n];\n\nvar peopleString = JSON.stringify(people);\n\nvar timestampString = new Date().toISOString();\n\nvar combinedString = timestampString + \" \" + peopleString;\n\nmsg.payload = combinedString;\n\nvar timestampString = msg.payload.substring(0, 24);\nvar timestamp = new Date(timestampString);\nvar peopleArray = JSON.parse(msg.payload.substring(25)); \n\n// Extract deviceIDs, nationalities, and ages from the people array\nvar deviceIDs = peopleArray.map(function(person) {\n    return person.deviceID;\n}).join(\"-\");\n\nvar nationalities = peopleArray.map(function(person) {\n    return person.nationality;\n}).join(\",\");\n\nvar ages = peopleArray.map(function(person) {\n    return person.age;\n}).join(\",\");\n\n\nvar payloadObj = {\n    groupID: 2,\n    timestamp: timestamp.toISOString(),\n    members: deviceIDs,\n    nationalities: nationalities,\n    ages: ages,\n    cardinality: 3,\n};\n\nmsg.payload = JSON.stringify(payloadObj);\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 240,
+        "y": 220,
+        "wires": [
+            [
+                "aef7ae8b.637dd",
+                "9a40dd9b.3bdff"
+            ]
+        ]
+    },
+    {
+        "id": "2d89e8f6.6491d8",
+        "type": "function",
+        "z": "9206241c.eddcf8",
+        "name": "prepareNewCsvLine",
+        "func": "// Extract data from msg.payload\nconst newLine = msg.payload[0];\nconst oldLine = msg.payload[1];\nconst { groupID, timestamp, members, nationalities, ages, cardinality } = newLine;\nlet { listOfPeople, nationality, age, dateJoined, lifetime, currentCardinality, minCardinality, maxCardinality, averageCardinality, nChangeCardinality } = oldLine;\n\n\n// Initialize variables for minCardinality and maxCardinality\nlet newMinCardinality = parseInt(minCardinality);\nlet newMaxCardinality = parseInt(maxCardinality);\n\n// Check if the new cardinality is less than the current minCardinality\nif (parseInt(cardinality) < newMinCardinality || isNaN(newMinCardinality)) {\n    newMinCardinality = parseInt(cardinality);\n}\n\n// Check if the new cardinality is greater than the current maxCardinality\nif (parseInt(cardinality) > newMaxCardinality || isNaN(newMaxCardinality)) {\n    newMaxCardinality = parseInt(cardinality);\n}\n\n// Calculate new averageCardinality and nChangeCardinality\nconst newNChangeCardinality = parseInt(nChangeCardinality) + 1;\nconst newAverageCardinality = ((parseFloat(averageCardinality) * parseInt(nChangeCardinality)) + parseInt(cardinality)) / newNChangeCardinality;\nconst newCurrentCardinality = parseInt(currentCardinality) + 1\n\n// Combine members, nationalities, and ages into single cells\nconst combinedMembers = members.split('-').join(',');\nconst combinedNationalities = nationalities.split(',').join(',');\nconst combinedAges = ages.split(',').join(',');\n\n// Calculate new lifetime in seconds\nconst timestampDate = new Date(timestamp);\nconst dateJoinedDate = new Date(dateJoined);\n\nconst differenceInSeconds = (timestampDate - dateJoinedDate) / 1000; // Convert milliseconds to seconds\n\nconst lifetimeSeconds = parseFloat(lifetime) + differenceInSeconds;\n\n// Construct the CSV row\nconst csvRow = `${groupID},\"${combinedMembers}\",\"${combinedNationalities}\",\"${combinedAges}\",\"${dateJoined}\",${lifetimeSeconds},${newCurrentCardinality},${newMinCardinality},${newMaxCardinality},${newAverageCardinality},${newNChangeCardinality}`;\n\n// Pass the CSV row to the next node\nmsg.payload = csvRow;\n\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1140,
+        "y": 720,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "83943cad.65dd5",
+        "type": "debug",
+        "z": "9206241c.eddcf8",
+        "name": "printError",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 700,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "89fe624c.18c0d",
+        "type": "debug",
+        "z": "9206241c.eddcf8",
+        "name": "printError",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 700,
+        "y": 1000,
+        "wires": []
     }
 ]
