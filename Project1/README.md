@@ -115,8 +115,11 @@ Two event-driven flows, one for `group` and other for `cardinality`. For both fi
 To copy .csv from docker container to local environment `docker cp mynodered:/data/output.csv /Users/Carlo/Desktop/POLITECNICO/NSDS/NSDS_Projects_2024/Project1/data`
 
 To initialize `output.csv` inside `/data`: get into docker container `docker exec -it XXX /bin/bash` the navigate to `/data` and `rm output.csv`. Then run `echo "groupID,listOfPeople,nationality,age,dateJoined,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality" > output.csv`.
+For the environment dataset: `echo "IP,nationality,age" > environment.csv`
 
-`docker exec -it ca7bfbf5c7e4  /bin/bash -c "cd /data && rm output.csv && echo 'groupID,listOfPeople,nationality,age,dateJoined,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality' > output.csv"`
+
+Complete command:
+`docker exec -it ca7bfbf5c7e4  /bin/bash -c "cd /data && rm output.csv && echo 'groupID,teamLeader,listOfPeople,nationality,age,dateJoined,dateEnded,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality' > output.csv && echo "IP,nationality,age" > environment.csv"`
 
 
 Message: `{"topic":"Hello",`
