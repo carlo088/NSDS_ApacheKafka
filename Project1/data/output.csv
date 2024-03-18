@@ -1,3 +1,3 @@
-groupID,listOfPeople,nationality,age,dateJoined,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality
-1,"85,93,42","Argentina,Italy,Italy","25,40,20","2024-03-07T16:18:13.994Z",5.249,3,3,4,3.6666666666666665,3
-2,"20,36,41","Germany,US,Italy","40,20,55","2024-03-08T16:18:14.037Z",0,3,3,3,3,1
+groupID,teamLeader,listOfPeople,nationality,age,dateJoined,dateEnded,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality
+0,200:54:32,"200:54:32,200:85:33,200:77:90,200:21:75","Italy,Argentina,Italy,Germany","30,25,30,42","2024-03-18T12:41:38.157Z","null",43.767,4,3,4,3.50,2
+1,200:43:32,"200:43:32,200:21:75,200:79:15","US,Germany,US","20,42,30","2024-03-18T12:41:58.260Z","null",0,3,3,3,3,1

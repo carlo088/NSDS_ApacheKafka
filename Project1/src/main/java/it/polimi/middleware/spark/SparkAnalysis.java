@@ -21,17 +21,18 @@ import org.apache.spark.sql.types.StructType;
  *
  * Input: a csv files with schema:
  *     (groupID,
+ *      teamLeader,
  *      listOfPeople,
  *      nationality,
  *      age,
  *      dateJoined,
+ *      dateEnded,
  *      lifetime,
  *      currentCardinality,
  *      minCardinality,
  *      maxCardinality,
  *      averageCardinality,
  *      nChangeCardinality)
- * 
  * 
  *
  * Queries
@@ -60,10 +61,12 @@ public class SparkAnalysis {
         // declare structure of DataFrame
         final List<StructField> schemaFields = new ArrayList<>();
         schemaFields.add(DataTypes.createStructField("groupID", DataTypes.StringType, true));
+        schemaFields.add(DataTypes.createStructField("teamLeader", DataTypes.StringType, true));
         schemaFields.add(DataTypes.createStructField("listOfPeople", DataTypes.StringType, true));
         schemaFields.add(DataTypes.createStructField("nationality", DataTypes.StringType, true));
         schemaFields.add(DataTypes.createStructField("age", DataTypes.StringType, true));
         schemaFields.add(DataTypes.createStructField("dateJoined", DataTypes.DateType, true));
+        schemaFields.add(DataTypes.createStructField("dateEnded", DataTypes.DateType, true));
         schemaFields.add(DataTypes.createStructField("lifetime", DataTypes.StringType, true));
         schemaFields.add(DataTypes.createStructField("currentCardinality", DataTypes.StringType, true));
         schemaFields.add(DataTypes.createStructField("minCardinality", DataTypes.StringType, true));
