@@ -6,12 +6,12 @@
 
 #define LAKE_SIDE 100
 #define FISH_QUANTITY 50
-#define MINIMUM_DISTANCE 1.0
+#define MINIMUM_DISTANCE 0.5
 #define SIZES_NUMBER 5
 #define MAXIMUM_SPEED 2
 #define NUM_DAYS 1
 #define DAY_SECONDS 86400
-#define TIME_STEP 50
+#define TIME_STEP 10
 
 typedef struct{
     double x, y, z;
@@ -23,8 +23,8 @@ typedef struct{
 //Global array use to store updates made by all the processes gathering the informations
 Fish* fishes;
 
-double distance(Fish* f1, Fish* f2){
-    return sqrt(pow(f2->x - f1->x, 2) + pow(f2->y - f1->y, 2) + pow(f2->z - f1->z, 2) * 1.0);
+double distance(Fish f1, Fish f2){
+    return sqrt(pow(f2.x - f1.x, 2) + pow(f2.y - f1.y, 2) + pow(f2.z - f1.z, 2) * 1.0);
 }
 
 
@@ -67,7 +67,7 @@ MPI_Datatype fish_definition(){
     return mpi_fish_type;
 }
 
-int overlapping(Fish* f1, Fish* f2, double min_distance){
+int overlapping(Fish f1, Fish f2, double min_distance){
 
     return distance(f1,f2) <= min_distance;
 
@@ -94,7 +94,7 @@ void fish_generation(int quantity, double min_distance, int size){
 
         for (int j = i-1; j >= 0; j--){
 
-            while(overlapping(&fishes[i], &fishes[j], min_distance)){
+            while(overlapping(fishes[i], fishes[j], min_distance)){
 
                 fishes[i].x = (double)rand() / RAND_MAX * LAKE_SIDE;
                 fishes[i].y = (double)rand() / RAND_MAX * LAKE_SIDE;
@@ -170,6 +170,7 @@ int main(int argc, char *argv[]){
         for (int i = 0; i < FISH_QUANTITY; i++){
             printf("coordinate pesce %d: %f,%f,%f\n", i, fishes[i].x,fishes[i].y,fishes[i].z);
             printf("velocità pesce %d: %f,%f,%f\n", i, fishes[i].sx,fishes[i].sy,fishes[i].sz);
+            printf("size pesce :%d\n", fishes[i].size);
         }
 
     }else{
@@ -188,13 +189,14 @@ int main(int argc, char *argv[]){
 
     int local_fish_index;
 
+    //Definition of Gather primitive necessary parameters
     int* receive_counter = malloc(num_procs*sizeof(int));
 
     int* displacements = malloc(num_procs*sizeof(int));
 
-    int to_send_counter;
-
     int spare_fishes = FISH_QUANTITY%num_procs;
+
+    int to_send_counter = rank >= spare_fishes ? FISH_QUANTITY/num_procs : FISH_QUANTITY/num_procs + 1;
 
     //Local fish array initialization: the first spare_fishes processes manage one fish more
     if (rank < spare_fishes){
@@ -208,51 +210,57 @@ int main(int argc, char *argv[]){
     }
 
     //Initializing AllGatherv necessary parameters
+    int spare_counter = 0;
     for (int i = 0; i < num_procs; i++){
 
         if (i < spare_fishes){
 
             receive_counter[i] = FISH_QUANTITY/num_procs + 1;
-            displacements[i] = i * ((FISH_QUANTITY/num_procs) + 1)
+            displacements[i] = i * ((FISH_QUANTITY/num_procs) + 1);
+            spare_counter++;
 
         }else{
 
             receive_counter[i] = FISH_QUANTITY/num_procs;
-            displacements[i] = //TODO: DEVI SOMMARE PRIMA GLI ALTRI +1, SE CE NE SONO!
+            displacements[i] = spare_counter * ((FISH_QUANTITY/num_procs) + 1) + (i-spare_counter) * FISH_QUANTITY/num_procs;
 
         }
 
-        ;
 
     }
 
-
-
     //TODO: non necessaria?
     MPI_Barrier(MPI_COMM_WORLD);
-    
+
     //Simulation and prints for each day
     for (int day = 0; day < NUM_DAYS; day++){
 
         //Compute positions aand eating day/timeStep times
         for (int t = 0; t < DAY_SECONDS/TIME_STEP; t++){
-
+            
             local_fish_index = 0;
-
             //Each process works on a subset of the fishes
-            for (int i = rank; i < FISH_QUANTITY; i += num_procs){
-                
-                position_update(i);
+            for (int i = displacements[rank] ; i < displacements[rank] + to_send_counter; i++){
+               
+                //Fish is not eaten
+                if (fishes[i].eaten != 1) position_update(i);
+
+                    
 
 
                 //Access of the global array to get the update positions
                 local_fish_array[local_fish_index].x = fishes[i].x;
-                local_fish_array[local_fish_index].y = fishes[i].y;
+                local_fish_array[local_fish_index].y = fishes[i].y;    
                 local_fish_array[local_fish_index].z = fishes[i].z;
+
+                //Access of the global array to get the updated speeds
                 local_fish_array[local_fish_index].sx = fishes[i].sx;
                 local_fish_array[local_fish_index].sy = fishes[i].sy;
                 local_fish_array[local_fish_index].sz = fishes[i].sz;
 
+                //Copy of size and eating flag
+                local_fish_array[local_fish_index].size = fishes[i].size;
+                local_fish_array[local_fish_index].eaten = fishes[i].eaten;
 
 
 
@@ -260,14 +268,69 @@ int main(int argc, char *argv[]){
             }
 
             //Gathering, for each process, al the updated positions in the global array
-            //TODO:
+            MPI_Allgatherv(local_fish_array, to_send_counter, mpi_fish, fishes,
+                                receive_counter, displacements, mpi_fish, MPI_COMM_WORLD);
 
+
+            MPI_Barrier(MPI_COMM_WORLD);
             //Updating the status of the fishes considering the conflicts
+    
+            
+            local_fish_index = 0;
+            for (int i = displacements[rank] ; i < displacements[rank] + to_send_counter; i++){
+
+                if (fishes[i].eaten != 1){
+                    
+                    for (int j = 0; j < FISH_QUANTITY; j++){
+
+                        //The fish is eaten by a bigger alive fish within the specified distance
+                        if (i != j && fishes[i].size < fishes[j].size && fishes[j].eaten != 1 && distance(fishes[i],fishes[j]) <= MINIMUM_DISTANCE){
+
+                            //"Killing" the eaten fish
+                            local_fish_array[local_fish_index].eaten = 1;
+                            local_fish_array[local_fish_index].x = 0.0;
+                            local_fish_array[local_fish_index].y = 0.0;
+                            local_fish_array[local_fish_index].z = 0.0;
+                            local_fish_array[local_fish_index].sx = 0.0;
+                            local_fish_array[local_fish_index].sy = 0.0;
+                            local_fish_array[local_fish_index].sz = 0.0;
+                            break;
+
+                        }
+
+                    }
+
+                }
+
+                local_fish_index++;
+
+            }
+
+            
+
+            //Sending to other processes the subset of fishes after "eating" update
+            MPI_Allgatherv(local_fish_array, to_send_counter, mpi_fish, fishes,
+                                receive_counter, displacements, mpi_fish, MPI_COMM_WORLD);
+
+
+            MPI_Barrier(MPI_COMM_WORLD);
+            
+        
 
         }
 
     }
     
+
+
+    if (rank == 0){
+
+    for (int i = 0; i < FISH_QUANTITY; i++){
+            printf("coordinate pesce dopo l'aggiornamento %d: %f,%f,%f\n", i, fishes[i].x,fishes[i].y,fishes[i].z);
+            printf("il pesce ha size: %d\n", fishes[i].size);
+    }
+
+    }
 
     free(fishes);
 
