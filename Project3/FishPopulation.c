@@ -201,11 +201,11 @@ int main(int argc, char *argv[]){
     //Local fish array initialization: the first spare_fishes processes manage one fish more
     if (rank < spare_fishes){
 
-        Fish* local_fish_array = malloc (((FISH_QUANTITY/num_procs) + 1)*sizeof(Fish));
+        local_fish_array = malloc (((FISH_QUANTITY/num_procs) + 1)*sizeof(Fish));
 
     }else{
 
-        Fish* local_fish_array = malloc ((FISH_QUANTITY/num_procs)*sizeof(Fish));
+        local_fish_array = malloc ((FISH_QUANTITY/num_procs)*sizeof(Fish));
 
     }
 
@@ -294,6 +294,10 @@ int main(int argc, char *argv[]){
                             local_fish_array[local_fish_index].sx = 0.0;
                             local_fish_array[local_fish_index].sy = 0.0;
                             local_fish_array[local_fish_index].sz = 0.0;
+
+                            //Setting the eaten fish flag in the fishes array to avoid having fishes eaten by dead ones
+                            fishes[i].eaten = 1;
+
                             break;
 
                         }
@@ -331,6 +335,8 @@ int main(int argc, char *argv[]){
     }
 
     }
+
+    free(local_fish_array);
 
     free(fishes);
 
