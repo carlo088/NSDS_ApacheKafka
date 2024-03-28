@@ -9,7 +9,7 @@
 #define MINIMUM_DISTANCE 0.5
 #define SIZES_NUMBER 5
 #define MAXIMUM_SPEED 2
-#define NUM_DAYS 1
+#define NUM_DAYS 10
 #define DAY_SECONDS 86400
 #define TIME_STEP 10
 
@@ -115,10 +115,6 @@ void position_update(int fish_index){
     new_y = fishes[fish_index].y + TIME_STEP * fishes[fish_index].sy;
     new_z = fishes[fish_index].z + TIME_STEP * fishes[fish_index].sz;
 
-    //TODO: Solve the problem of racing conditions in updating
-    
-    //TODO: Forse if sono abbastanza, non serve while
-
     while (new_x < 0 || new_x > LAKE_SIDE){
 
         fishes[fish_index].sx = -MAXIMUM_SPEED + (2*MAXIMUM_SPEED) * ((double)rand() / RAND_MAX);
@@ -148,7 +144,9 @@ void position_update(int fish_index){
 
 }
 
-int main(int argc, char *argv[]){
+
+
+double simulate(){
 
     //MPI Setup
     MPI_Init(NULL, NULL);
@@ -157,6 +155,9 @@ int main(int argc, char *argv[]){
     int num_procs;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+
+    //Get MPI time
+    double start_time = MPI_Wtime();
 
     //Definition of an MPI_Datatype for the Fish struct
     MPI_Datatype mpi_fish = fish_definition();
@@ -167,11 +168,13 @@ int main(int argc, char *argv[]){
         //Generation of fishes having random positions, size and speeds (directions)
         fish_generation(FISH_QUANTITY, MINIMUM_DISTANCE, SIZES_NUMBER);
 
+        /*Debug tools
         for (int i = 0; i < FISH_QUANTITY; i++){
             printf("coordinate pesce %d: %f,%f,%f\n", i, fishes[i].x,fishes[i].y,fishes[i].z);
             printf("velocità pesce %d: %f,%f,%f\n", i, fishes[i].sx,fishes[i].sy,fishes[i].sz);
             printf("size pesce :%d\n", fishes[i].size);
         }
+        */
 
     }else{
 
@@ -229,7 +232,7 @@ int main(int argc, char *argv[]){
 
     }
 
-    //TODO: non necessaria?
+    //Wait for all the processes to have initialized arrays
     MPI_Barrier(MPI_COMM_WORLD);
 
     //Simulation and prints for each day
@@ -272,6 +275,7 @@ int main(int argc, char *argv[]){
                                 receive_counter, displacements, mpi_fish, MPI_COMM_WORLD);
 
 
+            //Waiting for all the processes to have the updated array
             MPI_Barrier(MPI_COMM_WORLD);
             //Updating the status of the fishes considering the conflicts
     
@@ -323,18 +327,64 @@ int main(int argc, char *argv[]){
 
         }
 
+        if (rank == 0){
+
+            int still_alive = 0;
+            int smallest_size = SIZES_NUMBER;
+            int biggest_size = 0;
+            
+            for (int i = 0; i < FISH_QUANTITY; i++){
+
+                if (fishes[i].eaten == 0){
+
+                    still_alive++;
+
+                    if (fishes[i].size > biggest_size){
+
+                        biggest_size = fishes[i].size;
+
+                    }else if (fishes[i].size < smallest_size){
+
+                            smallest_size = fishes[i].size;
+
+                    }
+
+                }
+
+            }
+
+            if (still_alive > 0){
+                
+                printf("The number of fishes now (day %d) is: %d\n", day+1 , still_alive);
+                printf("The size of the biggest fish is %d\n", biggest_size);
+                printf("The size of the smallest fish is %d\n", smallest_size);
+
+            }else{
+
+                printf("There is no fishes remaining\n");
+
+            }
+
+        }
+
     }
     
 
-
+    /*Debug tools
     if (rank == 0){
 
-    for (int i = 0; i < FISH_QUANTITY; i++){
-            printf("coordinate pesce dopo l'aggiornamento %d: %f,%f,%f\n", i, fishes[i].x,fishes[i].y,fishes[i].z);
-            printf("il pesce ha size: %d\n", fishes[i].size);
-    }
+        for (int i = 0; i < FISH_QUANTITY; i++){
+                printf("coordinate pesce dopo l'aggiornamento %d: %f,%f,%f\n", i, fishes[i].x,fishes[i].y,fishes[i].z);
+                printf("il pesce ha size: %d\n", fishes[i].size);
+        }
 
     }
+    */
+
+    //Get final time
+    double end_time = MPI_Wtime();
+
+    if (rank == 0) printf("\nRun time was: %f seconds\n", end_time - start_time);
 
     free(local_fish_array);
 
@@ -342,5 +392,12 @@ int main(int argc, char *argv[]){
 
     MPI_Finalize();
     
-    
+    return end_time - start_time;
+}
+
+
+int main(int argc, char *argv[]){
+
+    simulate();
+
 }
