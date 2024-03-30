@@ -6,6 +6,7 @@ import akka.actor.ActorSelection;
 import akka.actor.Props;
 import akka.cluster.Cluster;
 import akka.cluster.ClusterEvent;
+import it.polimi.nsds.akka.ConfigUtils;
 import it.polimi.nsds.akka.Messages.CrashMessage;
 import it.polimi.nsds.akka.Messages.DataMessage;
 import it.polimi.nsds.akka.ResumeException;
@@ -20,7 +21,7 @@ public class Operator3Actor extends AbstractActor {
     List<Integer> window = new ArrayList<>();
 
     // find the sink of the pipeline (it's necessary to know the host address)
-    final private ActorSelection sink = getContext().actorSelection("akka://StreamProcessingSystem@127.0.0.1:2554/user/sinkSupervisor/sink");
+    final private ActorSelection sink = getContext().actorSelection("akka://StreamProcessingSystem@" + ConfigUtils.streamProcessingHost + ":2554/user/sinkSupervisor/sink");
 
     // ------- Cluster initialization --------
 

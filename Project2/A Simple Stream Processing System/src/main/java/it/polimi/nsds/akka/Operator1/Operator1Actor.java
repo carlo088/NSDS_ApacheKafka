@@ -3,6 +3,7 @@ package it.polimi.nsds.akka.Operator1;
 import akka.actor.*;
 import akka.cluster.Cluster;
 import akka.cluster.ClusterEvent;
+import it.polimi.nsds.akka.ConfigUtils;
 import it.polimi.nsds.akka.Messages.CrashMessage;
 import it.polimi.nsds.akka.Messages.DataMessage;
 import it.polimi.nsds.akka.ResumeException;
@@ -17,7 +18,7 @@ public class Operator1Actor extends AbstractActor {
     List<Integer> window = new ArrayList<>();
 
     // find the router of the next operator (it's necessary to know the host address)
-    final private ActorSelection nextRouter = getContext().actorSelection("akka://StreamProcessingSystem@127.0.0.1:2552/user/router2");
+    final private ActorSelection nextRouter = getContext().actorSelection("akka://StreamProcessingSystem@" + ConfigUtils.operator2Host + ":2552/user/router2");
 
     // ------- Cluster initialization --------
 

@@ -32,9 +32,9 @@ public class StreamProcessingSystem {
         ActorSystem system = ActorSystem.create("StreamProcessingSystem", config);
 
         // find the routers of the operators (it's necessary to know the host address)
-        ActorSelection router1 = system.actorSelection("akka://StreamProcessingSystem@127.0.0.1:2551/user/router1");
-        ActorSelection router2 = system.actorSelection("akka://StreamProcessingSystem@127.0.0.1:2552/user/router2");
-        ActorSelection router3 = system.actorSelection("akka://StreamProcessingSystem@127.0.0.1:2553/user/router3");
+        ActorSelection router1 = system.actorSelection("akka://StreamProcessingSystem@" + ConfigUtils.operator1Host + ":2551/user/router1");
+        ActorSelection router2 = system.actorSelection("akka://StreamProcessingSystem@" + ConfigUtils.operator2Host + ":2552/user/router2");
+        ActorSelection router3 = system.actorSelection("akka://StreamProcessingSystem@" + ConfigUtils.operator3Host + ":2553/user/router3");
 
         try {
 
@@ -48,8 +48,8 @@ public class StreamProcessingSystem {
 
             // ------- Stream processes definition --------
 
-            // read the data from noCrashes.txt
-            File streamData = new File("src/main/resources/inputStreams/withCrashes.txt");
+            // read the data from inputStream.txt
+            File streamData = new File("src/main/resources/inputStreams/noCrashes.txt");
             SECONDS.sleep(3);
 
             System.out.println("Starting process...");
