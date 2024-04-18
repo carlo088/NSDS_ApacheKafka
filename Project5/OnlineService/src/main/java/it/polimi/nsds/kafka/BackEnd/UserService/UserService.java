@@ -200,7 +200,7 @@ public class UserService implements Runnable{
             }
             return response.split(" ");
         } else {
-            return new String[]{"User not found"};
+            return new String[]{""};
         }
     }
 

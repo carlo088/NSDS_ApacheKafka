@@ -441,9 +441,11 @@ public class ClientInterface {
         send(new String[]{"SHOW_USER_REGISTRATIONS", usernameSession}, Service.REGISTRATION);
         response = receive(Service.REGISTRATION);
         List<String> registrations = new ArrayList<>(Arrays.asList(response));
-        for (String registrationJson: registrations) {
-            Registration registration = gson.fromJson(registrationJson, Registration.class);
-            registeredCourses.add(registration.getCourse());
+        if (!registrations.isEmpty() && !registrations.get(0).equals("")) {
+            for (String registrationJson : registrations) {
+                Registration registration = gson.fromJson(registrationJson, Registration.class);
+                registeredCourses.add(registration.getCourse());
+            }
         }
 
         System.out.println("Available projects:\n");

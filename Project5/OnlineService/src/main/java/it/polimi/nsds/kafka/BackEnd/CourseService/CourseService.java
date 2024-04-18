@@ -238,7 +238,7 @@ public class CourseService implements Runnable{
      */
     public String[] showCourseProjects(String courseId){
         if (!db_courses.containsKey(courseId))
-            return new String[]{"Course doesn't exists"};
+            return new String[]{""};
 
         Gson gson = new Gson();
         List<String> projects = new ArrayList<>();
