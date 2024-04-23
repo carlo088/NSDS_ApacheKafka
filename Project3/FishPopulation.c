@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <math.h>
 #include <time.h>
 #include <mpi.h>
 
-#define LAKE_SIDE 100
+#define LAKE_SIDE 50
 #define FISH_QUANTITY 50
 #define MINIMUM_DISTANCE 0.5
 #define SIZES_NUMBER 5
@@ -354,7 +355,7 @@ double simulate(){
             }
 
             if (still_alive > 0){
-                
+              
                 printf("The number of fishes now (day %d) is: %d\n", day+1 , still_alive);
                 printf("The size of the biggest fish is %d\n", biggest_size);
                 printf("The size of the smallest fish is %d\n", smallest_size);
