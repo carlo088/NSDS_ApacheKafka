@@ -342,8 +342,6 @@ double simulate(){
                         //Incrementing the size of the predator
                         fishes[fishes[k].predator].size++;
 
-                        printf("I have updated the PREDATOR SIZE (fish %d)\n", fishes[k].predator);
-
                         //Setting the predator field in order to not consider it again
                         fishes[k].predator = -1;
                     }
@@ -378,11 +376,16 @@ double simulate(){
 
             }
 
-            if (still_alive > 0){
+            if (still_alive > 0 && still_alive > 1){
               
                 printf("The number of fishes now (day %d) is: %d\n", day+1 , still_alive);
                 printf("The size of the biggest fish is %d\n", biggest_size);
                 printf("The size of the smallest fish is %d\n", smallest_size);
+
+            }else if(still_alive == 1){
+                
+                printf("The number of fishes now (day %d) is: %d\n", day+1 , still_alive);
+                printf("The size of the only remaining fish is %d\n", biggest_size);
 
             }else{
 
