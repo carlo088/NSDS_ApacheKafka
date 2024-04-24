@@ -8,6 +8,7 @@
 #define LAKE_SIDE 50
 #define FISH_QUANTITY 50
 #define MINIMUM_DISTANCE 0.5
+#define EATING_DISTANCE 1
 #define SIZES_NUMBER 5
 #define MAXIMUM_SPEED 2
 #define NUM_DAYS 10
@@ -19,6 +20,7 @@ typedef struct{
     double sx, sy, sz;
     int size;
     int eaten;
+    int predator;
 } Fish;
 
 //Global array use to store updates made by all the processes gathering the informations
@@ -39,14 +41,14 @@ double distance(Fish f1, Fish f2){
 
 MPI_Datatype fish_definition(){
 
-    int block_lengths[8] = {1,1,1,1,1,1,1,1};
+    int block_lengths[9] = {1,1,1,1,1,1,1,1,1};
 
     //Types of the structure's fields
-    MPI_Datatype types[8] = {MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_INT,MPI_INT};
+    MPI_Datatype types[9] = {MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_INT,MPI_INT,MPI_INT};
     
     //Array of displacements within the structure
     //MPI_Aint used to inform MPI about the type of a variable passed to the routine 
-    MPI_Aint offsets[8];
+    MPI_Aint offsets[9];
 
     offsets[0] = offsetof(Fish,x);
     offsets[1] = offsetof(Fish,y);
@@ -56,11 +58,12 @@ MPI_Datatype fish_definition(){
     offsets[5] = offsetof(Fish,sz);
     offsets[6] = offsetof(Fish,size);
     offsets[7] = offsetof(Fish,eaten);
+    offsets[8] = offsetof(Fish,predator);
 
     MPI_Datatype mpi_fish_type;
 
     //Creates an MPI datatype from a general set of datatypes, displacements and block sizes
-    MPI_Type_create_struct(8, block_lengths, offsets, types, &mpi_fish_type);
+    MPI_Type_create_struct(9, block_lengths, offsets, types, &mpi_fish_type);
 
     //Commits the datatype
     MPI_Type_commit(&mpi_fish_type);
@@ -92,6 +95,7 @@ void fish_generation(int quantity, double min_distance, int size){
         fishes[i].sz = -MAXIMUM_SPEED + (2*MAXIMUM_SPEED) * ((double)rand() / RAND_MAX);
         fishes[i].size = rand() % size + 1;
         fishes[i].eaten = 0;
+        fishes[i].predator = -1;
 
         for (int j = i-1; j >= 0; j--){
 
@@ -262,10 +266,10 @@ double simulate(){
                 local_fish_array[local_fish_index].sy = fishes[i].sy;
                 local_fish_array[local_fish_index].sz = fishes[i].sz;
 
-                //Copy of size and eating flag
+                //Copy of size, eating flag and predator field
                 local_fish_array[local_fish_index].size = fishes[i].size;
                 local_fish_array[local_fish_index].eaten = fishes[i].eaten;
-
+                local_fish_array[local_fish_index].predator = fishes[i].predator;
 
 
                 local_fish_index++;
@@ -278,9 +282,9 @@ double simulate(){
 
             //Waiting for all the processes to have the updated array
             MPI_Barrier(MPI_COMM_WORLD);
+
+
             //Updating the status of the fishes considering the conflicts
-    
-            
             local_fish_index = 0;
             for (int i = displacements[rank] ; i < displacements[rank] + to_send_counter; i++){
 
@@ -289,10 +293,11 @@ double simulate(){
                     for (int j = 0; j < FISH_QUANTITY; j++){
 
                         //The fish is eaten by a bigger alive fish within the specified distance
-                        if (i != j && fishes[i].size < fishes[j].size && fishes[j].eaten != 1 && distance(fishes[i],fishes[j]) <= MINIMUM_DISTANCE){
+                        if (i != j && fishes[i].size < fishes[j].size && fishes[j].eaten != 1 && distance(fishes[i],fishes[j]) <= EATING_DISTANCE){
 
                             //"Killing" the eaten fish
                             local_fish_array[local_fish_index].eaten = 1;
+                            local_fish_array[local_fish_index].predator = j;
                             local_fish_array[local_fish_index].x = 0.0;
                             local_fish_array[local_fish_index].y = 0.0;
                             local_fish_array[local_fish_index].z = 0.0;
@@ -324,8 +329,27 @@ double simulate(){
 
             MPI_Barrier(MPI_COMM_WORLD);
             
-        
+            //Postprocessing step to incremement the size of the fishes that have eaten others
+            for (int k = 0; k < FISH_QUANTITY; k++){
 
+                //The fish must be dead
+                if (fishes[k].eaten == 1){
+
+                    //printf("RANK: %d    qui ARRIVO  e fishes[%d].predator è : %d\n",rank, k,fishes[k].predator);
+
+                    if (fishes[k].predator > -1){
+
+                        //Incrementing the size of the predator
+                        fishes[fishes[k].predator].size++;
+
+                        printf("I have updated the PREDATOR SIZE (fish %d)\n", fishes[k].predator);
+
+                        //Setting the predator field in order to not consider it again
+                        fishes[k].predator = -1;
+                    }
+
+                }
+            }
         }
 
         if (rank == 0){
