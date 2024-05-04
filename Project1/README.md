@@ -76,7 +76,7 @@ NodeRed is the framework which contains the backend of the project. Three diffen
 
 1. **newEnvironmentPerson**: a message containing information regarding a newly spawned mote: *IP*, *nationality*, *age*. The message is processed and, after checking that the IP hasn't been processed yet, is saved as a new line in the environment.csv. **Computing statistics**: whenever a valid message is recieved on this topic, the backend also initializes the  statistics of the newy formed group.
 2. **createGroups**: a message containing information on the creation of a group. It features: a *teamLeaderIP* highlihgting the IP of the team leader, a *listofIPs* highlighting the IPs of the group members and an integer named *cardinality*. The message is processed and, after checking that the group hasn't been processed yet, is saved as a new line in the output.csv.
-3. **changeCardinality**: similarly to the previous topic, it recives a message containing three objects: *teamLeaderIP*, *listofIPs*, *cardinality*. The cases might be two: either a new member has joined a group (*cardinality* >= 3) or a group has just been dismantled (*cardinality* < 3). In the former case, after checking that the group exists in the database, the line of the .csv describing that group is updated. In the former case, after checking that the group exists in the database, a timestamp in the *dateEnded* column of line of the .csv describing that group is added. **Computing statistics**: whenever a valid message is recieved on this topic, the backend also computes and updates the statistics of the group.
+3. **changeCardinality**: similarly to the previous topic, it recives a message containing three objects: *teamLeaderIP*, *listofIPs*, *cardinality*. The cases might be two: either a new member has joined a group (*cardinality* >= 3) or a group has just been dismantled (*cardinality* < 3). In the former case, after checking that the group exists in the database, the line of the .csv describing that group is updated. In the latter case, after checking that the group exists in the database, a timestamp in the *dateEnded* column of line of the .csv describing that group is added. **Computing statistics**: whenever a valid message is recieved on this topic, the backend also computes and updates the statistics of the group.
 
 ## Implementation - Spark
 
@@ -153,13 +153,14 @@ Finally, the Spark engine also prints to console all of the results of the queri
 To copy .csv from docker container to local environment `docker cp mynodered:/data/output.csv /Users/Carlo/Desktop/POLITECNICO/NSDS/NSDS_Projects_2024/Project1/data`
 
 To initialize `output.csv` inside `/data`: get into docker container `docker exec -it XXX /bin/bash` the navigate to `/data` and `rm output.csv`. Then run `echo "groupID,listOfPeople,nationality,age,dateJoined,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality" > output.csv`.
-For the environment dataset: `echo "IP,nationality,age" > environment.csv`
+For the environment dataset: 
+
+`echo "dateJoined, IP,nationality,age" > environment.csv`
+
+`echo "date,nationality,age" > to_spark.csv`
 
 Complete command:
-`docker exec -it ca7bfbf5c7e4  /bin/bash -c "cd /data && rm output.csv && echo 'groupID,teamLeader,listOfPeople,nationality,age,dateJoined,dateEnded,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality' > output.csv && echo "IP,nationality,age" > environment.csv"`
-
--
-
+`docker exec -it ca7bfbf5c7e4  /bin/bash -c "cd /data && rm output.csv && echo 'groupID,teamLeader,listOfPeople,nationality,age,dateJoined,dateEnded,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality' > output.csv && echo "dateJoined, IP,nationality,age" > environment.csv"`
 
 
 ### Running Spark in a distributed environment:

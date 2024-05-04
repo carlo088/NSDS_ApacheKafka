@@ -1,13 +1,13 @@
 [
     {
-        "id": "9206241c.eddcf8",
+        "id": "5f0a38f5.9453d8",
         "type": "tab",
         "label": "Flow 1",
         "disabled": false,
         "info": ""
     },
     {
-        "id": "2d49513f.291dfe",
+        "id": "c8ffba1e.97a0c8",
         "type": "mqtt-broker",
         "name": "",
         "broker": "mqtt.neslab.it",
@@ -31,7 +31,7 @@
         "willPayload": ""
     },
     {
-        "id": "4c59f7b1.f86108",
+        "id": "4b0449ba.97fce8",
         "type": "mqtt-broker",
         "name": "",
         "broker": "mqtt.neslab.it",
@@ -55,7 +55,7 @@
         "willPayload": ""
     },
     {
-        "id": "d908a765.f7df18",
+        "id": "40ea7986.e2ad18",
         "type": "mqtt-broker",
         "name": "",
         "broker": "mqtt.neslab.it",
@@ -79,9 +79,24 @@
         "willPayload": ""
     },
     {
-        "id": "ed7e0abe.d2a398",
+        "id": "727e248f.a7953c",
+        "type": "websocket-listener",
+        "z": "",
+        "path": "ws://172.17.0.2:8989",
+        "wholemsg": "false"
+    },
+    {
+        "id": "dc06e01e.b2a43",
+        "type": "websocket-client",
+        "z": "",
+        "path": "ws://172.17.0.2:8989",
+        "tls": "",
+        "wholemsg": "false"
+    },
+    {
+        "id": "c9690785.44fba8",
         "type": "inject",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "Simulate createGroups",
         "topic": "Project1/createGroup",
         "payload": "Hello World",
@@ -94,21 +109,21 @@
         "y": 120,
         "wires": [
             [
-                "e286fe6.fcbbf",
-                "62cf2cf2.4c5824",
-                "6d1b8caa.ca8ce4"
+                "a5b1d94a.ce8068",
+                "363b31c0.3d4cfe",
+                "58e0ad93.2681d4"
             ]
         ]
     },
     {
-        "id": "ec997801.3828a8",
+        "id": "5d549faa.51f61",
         "type": "mqtt in",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "Project1/createGroup",
         "topic": "nsds2023/search",
         "qos": "1",
         "datatype": "auto",
-        "broker": "2d49513f.291dfe",
+        "broker": "c8ffba1e.97a0c8",
         "x": 260,
         "y": 300,
         "wires": [
@@ -116,9 +131,9 @@
         ]
     },
     {
-        "id": "828711f8.9452b",
+        "id": "5ddf5f94.673c",
         "type": "file",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "writeToCsv",
         "filename": "/data/output.csv",
         "appendNewline": true,
@@ -132,9 +147,9 @@
         ]
     },
     {
-        "id": "e286fe6.fcbbf",
+        "id": "a5b1d94a.ce8068",
         "type": "function",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "simulateMQTT1",
         "func": "// FIRST GROUP\n// var simulate = [\n//     { teamLeaderIP: \"200:54:32\", listofIPs: \"200:54:32,200:85:33,200:77:90\", cardinality: 3 }\n// ]\n\n// SECOND GROUP\nvar simulate = [\n    { teamLeaderIP: \"200:43:32\", listofIPs: \"200:43:32,200:11:85,200:79:15\", cardinality: 3 }\n]\n\nvar simulateString = JSON.stringify(simulate);\nvar timestampString = new Date().toISOString();\nvar combinedString = simulateString + timestampString;\n\nmsg.payload = combinedString;\n\nvar timestamp = new Date();\n\nvar payloadObj = {\n    teamLeaderIP: simulate[0].teamLeaderIP,\n    timestamp: timestamp.toISOString(),\n    members: simulate[0].listofIPs.split(\",\"),\n    cardinality: simulate[0].cardinality\n};\n\nmsg.payload = JSON.stringify(payloadObj);\n\n\nreturn msg;",
         "outputs": 1,
@@ -143,14 +158,14 @@
         "y": 180,
         "wires": [
             [
-                "aef7ae8b.637dd"
+                "b136e492.ff05b8"
             ]
         ]
     },
     {
-        "id": "aef7ae8b.637dd",
+        "id": "b136e492.ff05b8",
         "type": "function",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "convertToJSObject",
         "func": "var inputString = msg.payload;\n\n// Parse the string to convert it to a JavaScript object\nvar parsedObject = JSON.parse(inputString);\n\n// Now, parsedObject contains the JavaScript object\nmsg.payload = parsedObject;\n\nreturn msg;",
         "outputs": 1,
@@ -159,30 +174,14 @@
         "y": 180,
         "wires": [
             [
-                "9a487c7e.deb57",
-                "9a40dd9b.3bdff"
+                "71bdf7be.065a18"
             ]
         ]
     },
     {
-        "id": "9a40dd9b.3bdff",
-        "type": "debug",
-        "z": "9206241c.eddcf8",
-        "name": "Print",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "x": 460,
-        "y": 80,
-        "wires": []
-    },
-    {
-        "id": "493c35ea.ffaabc",
+        "id": "3a206caa.2bdd34",
         "type": "function",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "prepareNewCsvLine",
         "func": "// Extract data from msg.payload\nconst newGroup = msg.payload[0];\nconst people = msg.payload[1];\nconst groups = msg.payload[2];\n\nlet newGroupID = 0;\nif (groups.length != 0) {\n    for (let i = 0; i < groups.length; i++) {\n    if (groups[i].groupID > newGroupID) {\n        newGroupID = groups[i].groupID;\n    }\n}\nnewGroupID = newGroupID + 1\n}\n\nconst newGroupMembers = newGroup.members;\nconst columnHeaders = \"groupID,teamLeader,listOfPeople,nationality,age,dateJoined,dateEnded,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality\";\n\nconst matchingPeople = [];\nconst missingIPs = [];\nconst nationalities = [];\nconst ages = [];\nfor (const ip of newGroupMembers) {\n    const matchingPerson = people.find(person => person.IP === ip);\n    if (matchingPerson) {\n        matchingPeople.push(matchingPerson);\n        nationalities.push(matchingPerson.nationality);\n        ages.push(matchingPerson.age);\n    } else {\n        missingIPs.push(ip);\n    }\n}\n\nif (missingIPs.length > 0) {\n    // One or more IPs not found in database\n    msg.payload = \"One or more IPs not found in database: \" + missingIPs.join(', ');\n    return [msg, null];\n}\n\nconst teamLeader = newGroup.teamLeaderIP;\nconst dateJoined = newGroup.timestamp || new Date().toISOString();\nconst dateEnded = 'null';\nconst lifetime = 0;\nconst currentCardinality = newGroup.cardinality;\nconst minCardinality = newGroup.cardinality;\nconst maxCardinality = newGroup.cardinality;\nconst averageCardinality = newGroup.cardinality;\nconst nChangeCardinality = 1;\n\nconst nationalityList = nationalities.join(',');\nconst ageList = ages.join(',');\n\nconst csvRow = `${newGroupID},${teamLeader},\"${newGroupMembers.join(',')}\",\"${nationalityList}\",\"${ageList}\",${dateJoined},${dateEnded},${lifetime},${currentCardinality},${minCardinality},${maxCardinality},${averageCardinality},${nChangeCardinality}`;\n\nmsg.payload = csvRow;\n\n\nreturn [null, msg];",
         "outputs": 2,
@@ -191,18 +190,18 @@
         "y": 280,
         "wires": [
             [
-                "4b76a48f.808cec"
+                "a8989c5.12a586"
             ],
             [
-                "828711f8.9452b",
-                "795bcec2.d92cf"
+                "5ddf5f94.673c",
+                "c0216964.d38ab8"
             ]
         ]
     },
     {
-        "id": "c3a248fd.1716d8",
+        "id": "df7de676.13f518",
         "type": "file in",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "Read Groups",
         "filename": "/data/output.csv",
         "format": "utf8",
@@ -210,17 +209,17 @@
         "sendError": false,
         "encoding": "none",
         "x": 230,
-        "y": 520,
+        "y": 540,
         "wires": [
             [
-                "1ee14a63.11e396"
+                "bcc0d2b3.7d951"
             ]
         ]
     },
     {
-        "id": "1ee14a63.11e396",
+        "id": "bcc0d2b3.7d951",
         "type": "csv",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "read",
         "sep": ",",
         "hdrin": true,
@@ -231,17 +230,17 @@
         "skip": "0",
         "strings": false,
         "x": 410,
-        "y": 520,
+        "y": 540,
         "wires": [
             [
-                "d1bf3d7b.c7089"
+                "b086bf1d.cd6ad"
             ]
         ]
     },
     {
-        "id": "3d2f9202.f755ee",
+        "id": "843e41cf.824bb",
         "type": "inject",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "Simulate changeCardinality",
         "topic": "Project1/changeCardinality",
         "payload": "Hello World",
@@ -251,51 +250,51 @@
         "once": false,
         "onceDelay": 0.1,
         "x": 160,
-        "y": 420,
+        "y": 440,
         "wires": [
             [
-                "5e7b08c1.0dc0a8",
-                "c3a248fd.1716d8",
-                "9e44d79.c1dab28"
+                "fcd66188.5506f",
+                "df7de676.13f518",
+                "ea4c9123.0758f"
             ]
         ]
     },
     {
-        "id": "5e7b08c1.0dc0a8",
+        "id": "fcd66188.5506f",
         "type": "function",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "simulateMQTT",
         "func": "// GROUP GROWS\nvar simulate = [\n    { teamLeaderIP: \"200:54:32\", listofIPs: \"200:54:32,200:85:33,200:77:90,200:21:75\", cardinality: 4 }\n]\n\n// GROUP DIES\n// var simulate = [\n//     { teamLeaderIP: \"200:43:32\", listofIPs: \"200:43:32,200:11:85\", cardinality: 2 }\n// ]\n\nvar simulateString = JSON.stringify(simulate);\nvar timestampString = new Date().toISOString();\nvar combinedString = simulateString + timestampString;\n\nmsg.payload = combinedString;\n\nvar timestamp = new Date();\n\nvar payloadObj = {\n    groupID: simulate[0].teamLeaderIP,\n    timestamp: timestamp.toISOString(),\n    members: simulate[0].listofIPs.split(\",\"),\n    cardinality: simulate[0].cardinality\n};\n\nmsg.payload = JSON.stringify(payloadObj);\n\n\nreturn msg;\n",
         "outputs": 1,
         "noerr": 0,
         "x": 240,
-        "y": 480,
+        "y": 500,
         "wires": [
             [
-                "8f676722.f56c18"
+                "c2ee3974.495cb8"
             ]
         ]
     },
     {
-        "id": "8f676722.f56c18",
+        "id": "c2ee3974.495cb8",
         "type": "function",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "convertToJSObject",
         "func": "var inputString = msg.payload;\n\n// Parse the string to convert it to a JavaScript object\nvar parsedObject = JSON.parse(inputString);\n\n// Now, parsedObject contains the JavaScript object\nmsg.payload = parsedObject;\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "x": 430,
-        "y": 480,
+        "y": 500,
         "wires": [
             [
-                "d1bf3d7b.c7089"
+                "b086bf1d.cd6ad"
             ]
         ]
     },
     {
-        "id": "d1bf3d7b.c7089",
+        "id": "b086bf1d.cd6ad",
         "type": "join",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "",
         "mode": "custom",
         "build": "array",
@@ -313,17 +312,17 @@
         "reduceInitType": "",
         "reduceFixup": "",
         "x": 610,
-        "y": 500,
+        "y": 520,
         "wires": [
             [
-                "e2adb1f3.a7b63"
+                "5dff87d.1a69d78"
             ]
         ]
     },
     {
-        "id": "795bcec2.d92cf",
+        "id": "c0216964.d38ab8",
         "type": "debug",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "printNewCsvLine",
         "active": true,
         "tosidebar": true,
@@ -336,29 +335,29 @@
         "wires": []
     },
     {
-        "id": "d91a9d47.e1642",
+        "id": "c5d52b6b.1fb5b8",
         "type": "function",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "prepareNewCsvLine",
         "func": "// Extract data from msg.payload\nconst newLine = msg.payload[0];\nconst oldLines = msg.payload[1];\nconst people = msg.payload[2];\n\n// Extract groupID from the newLine object\nconst newGroupID = newLine.groupID;\n\nconst columnHeaders = \"groupID,teamLeader,listOfPeople,nationality,age,dateJoined,dateEnded,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality\";\n\n// Initialize an array to store all CSV rows\nconst allCsvRows = [];\nallCsvRows.push(columnHeaders);\n\nlet matchFound = false;\nlet matchingIndex = -1;\n\n// Find the row in the CSV that matches teamLeader with groupID and has dateEnded == null\nfor (let i = 0; i < oldLines.length; i++) {\n    if (oldLines[i].teamLeader === newGroupID && oldLines[i].dateEnded === 'null') {\n        matchingIndex = i;\n        matchFound = true;\n        break;\n    }\n}\n\nif (!matchFound) {\n    // No matching groupID found\n    msg.payload = \"Error: No matching team leader found\"\n    return [msg, null];\n}\n\n\nfor (let i = 0; i < oldLines.length; i++) {\n    \n    // Update csv line\n    if (i === matchingIndex) {\n\n        const { teamLeader, members, cardinality } = newLine;\n        const { groupID, listOfPeople, nationality, age, dateJoined, dateEnded, lifetime, currentCardinality, minCardinality, maxCardinality, averageCardinality, nChangeCardinality } = oldLines[i];\n\n        // find new member\n        const listOfPeopleArray = listOfPeople.split(',');\n        const newMember = members.find(member => !listOfPeopleArray.includes(member));\n        \n        // match it with people dataset\n        const matchingPerson = people.find(person => person.IP === newMember);\n        const newMemberNationality = matchingPerson ? matchingPerson.nationality : '';\n        const newMemberAge = matchingPerson ? matchingPerson.age : '';\n        \n        const newListOfPeople = listOfPeople ? `${listOfPeople},${newMember}` : newMember;\n        const newNationality = nationality ? `${nationality},${newMemberNationality}` : newMemberNationality;\n        const newAge = age ? `${age},${newMemberAge}` : newMemberAge;\n        \n\n        let newMinCardinality = parseInt(minCardinality);\n        let newMaxCardinality = parseInt(maxCardinality);\n\n        if (parseInt(cardinality) < newMinCardinality || isNaN(newMinCardinality)) {\n            newMinCardinality = parseInt(cardinality);\n        }\n        if (parseInt(cardinality) > newMaxCardinality || isNaN(newMaxCardinality)) {\n            newMaxCardinality = parseInt(cardinality);\n        }\n\n        const newNChangeCardinality = parseInt(nChangeCardinality) + 1;\n        const newAverageCardinality = (((parseFloat(averageCardinality) * parseInt(nChangeCardinality)) + parseInt(cardinality)) / newNChangeCardinality).toFixed(2);\n        const newCurrentCardinality = parseInt(currentCardinality) + 1;\n\n        const timestampDate = new Date();\n        const dateJoinedDate = new Date(dateJoined);\n        const differenceInSeconds = (timestampDate - dateJoinedDate) / 1000;\n        const lifetimeSeconds = parseFloat(lifetime) + differenceInSeconds;\n\n        // Construct the modified CSV row\n        const modifiedCsvRow = `${groupID},${oldLines[i].teamLeader},\"${newListOfPeople}\",\"${newNationality}\",\"${newAge}\",\"${dateJoined}\",\"${dateEnded}\",${lifetimeSeconds},${newCurrentCardinality},${newMinCardinality},${newMaxCardinality},${newAverageCardinality},${newNChangeCardinality}`;\n        \n        // Push the modified CSV row to the array\n        allCsvRows.push(modifiedCsvRow);\n        \n    } else {\n        \n        // Construct CSV row for other lines\n        const { groupID, teamLeader, dateJoined, dateEnded, lifetime, currentCardinality, minCardinality, maxCardinality, averageCardinality, nChangeCardinality } = oldLines[i];\n\n        const csvRow = `${groupID},${oldLines[i].teamLeader},\"${oldLines[i].listOfPeople}\",\"${oldLines[i].nationality}\",\"${oldLines[i].age}\",\"${dateJoined}\",\"${dateEnded}\",${lifetime},${currentCardinality},${minCardinality},${maxCardinality},${averageCardinality},${nChangeCardinality}`;\n        \n        allCsvRows.push(csvRow);\n    }\n}\n\n// Pass all CSV rows to the next node\nmsg.payload = allCsvRows.join('\\n');\n\nreturn [null, msg];\n",
         "outputs": 2,
         "noerr": 0,
-        "x": 620,
+        "x": 640,
         "y": 660,
         "wires": [
             [
-                "83943cad.65dd5"
+                "b4f60b6e.2a76e8"
             ],
             [
-                "2ccea458.e8d29c",
-                "7606e879.8532d8"
+                "c71e0786.0d7078",
+                "d32cc1a3.fcab7"
             ]
         ]
     },
     {
-        "id": "2ccea458.e8d29c",
+        "id": "c71e0786.0d7078",
         "type": "debug",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "printNewCsvLine",
         "active": true,
         "tosidebar": true,
@@ -367,13 +366,13 @@
         "complete": "payload",
         "targetType": "msg",
         "x": 910,
-        "y": 660,
+        "y": 680,
         "wires": []
     },
     {
-        "id": "7606e879.8532d8",
+        "id": "d32cc1a3.fcab7",
         "type": "file",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "writeToCsv",
         "filename": "/data/output.csv",
         "appendNewline": true,
@@ -381,30 +380,30 @@
         "overwriteFile": "true",
         "encoding": "none",
         "x": 890,
-        "y": 720,
+        "y": 740,
         "wires": [
             []
         ]
     },
     {
-        "id": "f1313cff.c383e",
+        "id": "d1357d8a.3e2d8",
         "type": "mqtt in",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "Project1/changeCardinality",
         "topic": "Project1/changeCardinality",
         "qos": "1",
         "datatype": "auto",
-        "broker": "2d49513f.291dfe",
+        "broker": "c8ffba1e.97a0c8",
         "x": 270,
-        "y": 600,
+        "y": 620,
         "wires": [
             []
         ]
     },
     {
-        "id": "83943cad.65dd5",
+        "id": "b4f60b6e.2a76e8",
         "type": "debug",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "printError",
         "active": true,
         "tosidebar": true,
@@ -413,44 +412,44 @@
         "complete": "payload",
         "targetType": "msg",
         "x": 880,
-        "y": 600,
+        "y": 620,
         "wires": []
     },
     {
-        "id": "fb1642dc.9e625",
+        "id": "51d0c868.d547b8",
         "type": "mqtt in",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "Project1/newEnvironmentPerson",
         "topic": "Project1/newEnvironmentPerson",
         "qos": "1",
         "datatype": "auto",
-        "broker": "2d49513f.291dfe",
+        "broker": "c8ffba1e.97a0c8",
         "x": 290,
-        "y": 920,
+        "y": 940,
         "wires": [
             []
         ]
     },
     {
-        "id": "c639caa3.06e7c8",
+        "id": "e7ac3205.2d5ad",
         "type": "function",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "simulateMQTT",
-        "func": "// var person = { IP: \"200:54:32\", nationality: \"Italy\", age: 30 };\n// var person = { IP: \"200:85:33\", nationality: \"Argentina\", age: 25 };\n// var person = { IP: \"200:77:90\", nationality: \"Italy\", age: 30 };\nvar person = { IP: \"200:11:85\", nationality: \"Italy\", age: 25 };\n// var person = { IP: \"200:21:75\", nationality: \"Germany\", age: 42 };\n// var person = { IP: \"200:43:32\", nationality: \"US\", age: 20 };\n// var person = { IP: \"200:79:15\", nationality: \"US\", age: 30 };\n\n\nmsg.payload = JSON.stringify(person);\n\nreturn msg;",
+        "func": "// var person = { IP: \"200:54:32\", nationality: \"Italy\", age: 30 };\n// var person = { IP: \"200:85:33\", nationality: \"Argentina\", age: 25 };\n//var person = { IP: \"200:77:90\", nationality: \"Italy\", age: 30 };\n// var person = { IP: \"200:11:85\", nationality: \"Italy\", age: 25 };\n// var person = { IP: \"200:21:75\", nationality: \"Germany\", age: 42 };\n// var person = { IP: \"200:43:32\", nationality: \"US\", age: 20 };\nvar person = { IP: \"200:79:15\", nationality: \"US\", age: 30 };\n\n\n// msg.payload = JSON.stringify(person);\nvar personString = JSON.stringify(person);\nvar timestampString = new Date().toISOString();\nvar combinedString = personString + timestampString;\n\nvar timestamp = new Date();\n\nvar payloadObj = {\n    dateJoined: timestamp.toISOString(),\n    IP: person.IP,\n    nationality: person.nationality,\n    age: person.age\n};\n\nmsg.payload = JSON.stringify(payloadObj);\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "x": 240,
-        "y": 840,
+        "y": 860,
         "wires": [
             [
-                "e0829332.46f66"
+                "d5ad4455.433a08"
             ]
         ]
     },
     {
-        "id": "bb32b50c.7f14e8",
+        "id": "9009724d.5b9cd",
         "type": "inject",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "Simulate newEnvironmentPerson",
         "topic": "Project1/newEnvironmentPerson",
         "payload": "Hello World",
@@ -460,18 +459,18 @@
         "once": false,
         "onceDelay": 0.1,
         "x": 180,
-        "y": 780,
+        "y": 800,
         "wires": [
             [
-                "c639caa3.06e7c8",
-                "572343ce.870bbc"
+                "e7ac3205.2d5ad",
+                "343eea88.02e386"
             ]
         ]
     },
     {
-        "id": "572343ce.870bbc",
+        "id": "343eea88.02e386",
         "type": "file in",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "Read Environment",
         "filename": "/data/environment.csv",
         "format": "utf8",
@@ -479,54 +478,54 @@
         "sendError": false,
         "encoding": "none",
         "x": 250,
-        "y": 880,
+        "y": 900,
         "wires": [
             [
-                "ea3778da.c59108"
+                "cb1fa2de.85b06"
             ]
         ]
     },
     {
-        "id": "ea3778da.c59108",
+        "id": "cb1fa2de.85b06",
         "type": "csv",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "read",
         "sep": ",",
         "hdrin": true,
         "hdrout": "",
         "multi": "mult",
         "ret": "\\n",
-        "temp": "IP,nationality,age",
+        "temp": "dateJoined,IP,nationality,age",
         "skip": "0",
         "strings": false,
         "x": 410,
-        "y": 880,
+        "y": 900,
         "wires": [
             [
-                "c0eb1e52.566b7"
+                "9418e315.bffd"
             ]
         ]
     },
     {
-        "id": "e0829332.46f66",
+        "id": "d5ad4455.433a08",
         "type": "function",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "convertToJSObject",
         "func": "var inputString = msg.payload;\n\n// Parse the string to convert it to a JavaScript object\nvar parsedObject = JSON.parse(inputString);\n\n// Now, parsedObject contains the JavaScript object\nmsg.payload = parsedObject;\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "x": 450,
-        "y": 840,
+        "y": 860,
         "wires": [
             [
-                "c0eb1e52.566b7"
+                "9418e315.bffd"
             ]
         ]
     },
     {
-        "id": "c0eb1e52.566b7",
+        "id": "9418e315.bffd",
         "type": "join",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "",
         "mode": "custom",
         "build": "array",
@@ -544,37 +543,38 @@
         "reduceInitType": "",
         "reduceFixup": "",
         "x": 630,
-        "y": 860,
+        "y": 880,
         "wires": [
             [
-                "5c032470.f3daec"
+                "f0168d63.55ff2"
             ]
         ]
     },
     {
-        "id": "5c032470.f3daec",
+        "id": "f0168d63.55ff2",
         "type": "function",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "prepareNewCsvLine",
-        "func": "// Extract data from msg.payload\nconst newLine = msg.payload[0];\nconst oldLines = msg.payload[1];\n\nlet matchFound = false;\nlet matchingIndex = -1;\n\n// Iterate over the objects in the second array to find matching IP\nfor (let i = 0; i < oldLines.length; i++) {\n    const groupIdStr = oldLines[i].IP;\n    if (groupIdStr === newLine.IP) {\n        matchingIndex = i;\n        matchFound = true;\n        break;\n    }\n}\n\nif (matchFound) {\n    // IP already in database\n    msg.payload = \"Error: IP already inside database\"\n    return [msg, null];\n}\n\nconst csvRow = `${newLine.IP},\"${newLine.nationality}\",\"${newLine.age}\"`;\n    \nmsg.payload = csvRow;\n\nreturn [null, msg];",
+        "func": "// Extract data from msg.payload\nconst newLine = msg.payload[0];\nconst oldLines = msg.payload[1];\n\nlet matchFound = false;\nlet matchingIndex = -1;\n\n// Iterate over the objects in the second array to find matching IP\nfor (let i = 0; i < oldLines.length; i++) {\n    const groupIdStr = oldLines[i].IP;\n    if (groupIdStr === newLine.IP) {\n        matchingIndex = i;\n        matchFound = true;\n        break;\n    }\n}\n\nif (matchFound) {\n    // IP already in database\n    msg.payload = \"Error: IP already inside database\"\n    return [msg, null];\n}\n\nconst csvRow = `${newLine.dateJoined},${newLine.IP},\"${newLine.nationality}\",\"${newLine.age}\"`;\n\nmsg.filename = \"/data/to_spark/\" + newLine.IP + \".csv\"\nmsg.payload = csvRow;\n\nreturn [null, msg];",
         "outputs": 2,
         "noerr": 0,
         "x": 640,
         "y": 980,
         "wires": [
             [
-                "def4b8b9.6292c8"
+                "d5909e2d.7fda3"
             ],
             [
-                "d8d3d9fc.2c25c8",
-                "5a87e3bd.5430ec"
+                "24f01e82.d79572",
+                "e7ca5466.719198",
+                "ce842e1c.23db5"
             ]
         ]
     },
     {
-        "id": "d8d3d9fc.2c25c8",
+        "id": "24f01e82.d79572",
         "type": "debug",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "printNewCsvLine",
         "active": true,
         "tosidebar": true,
@@ -583,13 +583,13 @@
         "complete": "payload",
         "targetType": "msg",
         "x": 950,
-        "y": 980,
+        "y": 1000,
         "wires": []
     },
     {
-        "id": "5a87e3bd.5430ec",
+        "id": "e7ca5466.719198",
         "type": "file",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "writeToCsv",
         "filename": "/data/environment.csv",
         "appendNewline": true,
@@ -597,15 +597,15 @@
         "overwriteFile": "false",
         "encoding": "none",
         "x": 930,
-        "y": 1040,
+        "y": 1060,
         "wires": [
             []
         ]
     },
     {
-        "id": "def4b8b9.6292c8",
+        "id": "d5909e2d.7fda3",
         "type": "debug",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "printError",
         "active": true,
         "tosidebar": true,
@@ -614,13 +614,13 @@
         "complete": "payload",
         "targetType": "msg",
         "x": 920,
-        "y": 920,
+        "y": 940,
         "wires": []
     },
     {
-        "id": "62cf2cf2.4c5824",
+        "id": "363b31c0.3d4cfe",
         "type": "file in",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "Read Environment",
         "filename": "/data/environment.csv",
         "format": "utf8",
@@ -631,35 +631,35 @@
         "y": 220,
         "wires": [
             [
-                "340bf227.84e60e"
+                "993a9daf.deb17"
             ]
         ]
     },
     {
-        "id": "340bf227.84e60e",
+        "id": "993a9daf.deb17",
         "type": "csv",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "read",
         "sep": ",",
         "hdrin": true,
         "hdrout": "",
         "multi": "mult",
         "ret": "\\n",
-        "temp": "IP,nationality,age",
+        "temp": "dateJoined,IP,nationality,age",
         "skip": "0",
         "strings": false,
         "x": 410,
         "y": 220,
         "wires": [
             [
-                "9a487c7e.deb57"
+                "71bdf7be.065a18"
             ]
         ]
     },
     {
-        "id": "9a487c7e.deb57",
+        "id": "71bdf7be.065a18",
         "type": "join",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "",
         "mode": "custom",
         "build": "array",
@@ -680,14 +680,14 @@
         "y": 200,
         "wires": [
             [
-                "493c35ea.ffaabc"
+                "3a206caa.2bdd34"
             ]
         ]
     },
     {
-        "id": "4b76a48f.808cec",
+        "id": "a8989c5.12a586",
         "type": "debug",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "Error Missing IPs",
         "active": true,
         "tosidebar": true,
@@ -700,9 +700,9 @@
         "wires": []
     },
     {
-        "id": "9e44d79.c1dab28",
+        "id": "ea4c9123.0758f",
         "type": "file in",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "Read Environment",
         "filename": "/data/environment.csv",
         "format": "utf8",
@@ -710,77 +710,77 @@
         "sendError": false,
         "encoding": "none",
         "x": 250,
-        "y": 560,
+        "y": 580,
         "wires": [
             [
-                "e896cae0.328c98"
+                "d1835062.baee6"
             ]
         ]
     },
     {
-        "id": "e896cae0.328c98",
+        "id": "d1835062.baee6",
         "type": "csv",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "read",
         "sep": ",",
         "hdrin": true,
         "hdrout": "",
         "multi": "mult",
         "ret": "\\n",
-        "temp": "IP,nationality,age",
+        "temp": "dateJoined,IP,nationality,age",
         "skip": "0",
         "strings": false,
         "x": 410,
-        "y": 560,
+        "y": 580,
         "wires": [
             [
-                "d1bf3d7b.c7089"
+                "b086bf1d.cd6ad"
             ]
         ]
     },
     {
-        "id": "e2adb1f3.a7b63",
+        "id": "5dff87d.1a69d78",
         "type": "function",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "Routing",
         "func": "if (msg.payload[0].cardinality < 3) {\n    // Route the message in one direction\n    return [msg, null];\n} else {\n    // Route the message in another direction\n    return [null, msg];\n}\n",
         "outputs": 2,
         "noerr": 0,
         "x": 760,
-        "y": 500,
+        "y": 520,
         "wires": [
             [
-                "c7b9a21e.e8a92"
+                "65d22d63.b80c74"
             ],
             [
-                "d91a9d47.e1642"
+                "c5d52b6b.1fb5b8"
             ]
         ]
     },
     {
-        "id": "c7b9a21e.e8a92",
+        "id": "65d22d63.b80c74",
         "type": "function",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "addDateEnded",
         "func": "// Extract data from msg.payload\nconst newLine = msg.payload[0];\nconst oldLines = msg.payload[1];\nconst people = msg.payload[2];\n\n// Extract groupID from the newLine object\nconst newGroupID = newLine.groupID;\n\nconst columnHeaders = \"groupID,teamLeader,listOfPeople,nationality,age,dateJoined,dateEnded,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality\";\n\n// Initialize an array to store all CSV rows\nconst allCsvRows = [];\nallCsvRows.push(columnHeaders);\n\nlet matchFound = false;\nlet matchingIndex = -1;\n\n// Find the row in the CSV that matches teamLeader with groupID and has dateEnded == null\nfor (let i = 0; i < oldLines.length; i++) {\n    if (oldLines[i].teamLeader === newGroupID && oldLines[i].dateEnded === 'null') {\n        matchingIndex = i;\n        matchFound = true;\n        break;\n    }\n}\n\nif (!matchFound) {\n    // No matching groupID found\n    msg.payload = \"Error: No matching team leader found\"\n    return [msg, null];\n}\n\n\nfor (let i = 0; i < oldLines.length; i++) {\n    \n    // Update csv line\n    if (i === matchingIndex) {\n\n        const { teamLeader, members, cardinality } = newLine;\n        const { groupID, listOfPeople, nationality, age, dateJoined, dateEnded, lifetime, currentCardinality, minCardinality, maxCardinality, averageCardinality, nChangeCardinality } = oldLines[i];\n\n\n        let newMinCardinality = 2\n        let newMaxCardinality = parseInt(maxCardinality);\n\n        if (parseInt(cardinality) < newMinCardinality || isNaN(newMinCardinality)) {\n            newMinCardinality = parseInt(cardinality);\n        }\n        if (parseInt(cardinality) > newMaxCardinality || isNaN(newMaxCardinality)) {\n            newMaxCardinality = parseInt(cardinality);\n        }\n\n        const newNChangeCardinality = parseInt(nChangeCardinality) + 1;\n        const newAverageCardinality = (((parseFloat(averageCardinality) * parseInt(nChangeCardinality)) + parseInt(cardinality)) / newNChangeCardinality).toFixed(2);\n        const newCurrentCardinality = 0;\n\n        const timestampDate = new Date();\n        const newDateEnded = timestampDate.toISOString();\n        const dateJoinedDate = new Date(dateJoined);\n        const differenceInSeconds = (timestampDate - dateJoinedDate) / 1000;\n        const lifetimeSeconds = parseFloat(lifetime) + differenceInSeconds;\n\n        // Construct the modified CSV row\n        const modifiedCsvRow = `${groupID},${oldLines[i].teamLeader},\"${listOfPeople}\",\"${nationality}\",\"${age}\",\"${dateJoined}\",\"${newDateEnded}\",${lifetimeSeconds},${newCurrentCardinality},${newMinCardinality},${newMaxCardinality},${newAverageCardinality},${newNChangeCardinality}`;\n        \n        // Push the modified CSV row to the array\n        allCsvRows.push(modifiedCsvRow);\n        \n    } else {\n        \n        // Construct CSV row for other lines\n        const { groupID, teamLeader, dateJoined, dateEnded, lifetime, currentCardinality, minCardinality, maxCardinality, averageCardinality, nChangeCardinality } = oldLines[i];\n\n        const csvRow = `${groupID},${oldLines[i].teamLeader},\"${oldLines[i].listOfPeople}\",\"${oldLines[i].nationality}\",\"${oldLines[i].age}\",\"${dateJoined}\",\"${dateEnded}\",${lifetime},${currentCardinality},${minCardinality},${maxCardinality},${averageCardinality},${nChangeCardinality}`;\n        \n        allCsvRows.push(csvRow);\n    }\n}\n\n// Pass all CSV rows to the next node\nmsg.payload = allCsvRows.join('\\n');\n\nreturn [null, msg];\n",
         "outputs": 2,
         "noerr": 0,
         "x": 940,
-        "y": 460,
+        "y": 480,
         "wires": [
             [
-                "afbf71ad.0f9f4"
+                "ffa86b3f.4b7408"
             ],
             [
-                "25b19be1.136044",
-                "84ac6794.7dae38"
+                "e75730fa.73201",
+                "768864dd.77de4c"
             ]
         ]
     },
     {
-        "id": "afbf71ad.0f9f4",
+        "id": "ffa86b3f.4b7408",
         "type": "debug",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "printError",
         "active": true,
         "tosidebar": true,
@@ -789,13 +789,13 @@
         "complete": "payload",
         "targetType": "msg",
         "x": 1180,
-        "y": 560,
+        "y": 580,
         "wires": []
     },
     {
-        "id": "25b19be1.136044",
+        "id": "e75730fa.73201",
         "type": "debug",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "printNewCsvLine",
         "active": true,
         "tosidebar": true,
@@ -804,13 +804,13 @@
         "complete": "payload",
         "targetType": "msg",
         "x": 1210,
-        "y": 620,
+        "y": 640,
         "wires": []
     },
     {
-        "id": "84ac6794.7dae38",
+        "id": "768864dd.77de4c",
         "type": "file",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "writeToCsv",
         "filename": "/data/output.csv",
         "appendNewline": true,
@@ -818,15 +818,15 @@
         "overwriteFile": "true",
         "encoding": "none",
         "x": 1190,
-        "y": 680,
+        "y": 700,
         "wires": [
             []
         ]
     },
     {
-        "id": "6d1b8caa.ca8ce4",
+        "id": "58e0ad93.2681d4",
         "type": "file in",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "Read Groups",
         "filename": "/data/output.csv",
         "format": "utf8",
@@ -837,14 +837,14 @@
         "y": 260,
         "wires": [
             [
-                "723e0f8f.8194d"
+                "555c12f7.143d1c"
             ]
         ]
     },
     {
-        "id": "723e0f8f.8194d",
+        "id": "555c12f7.143d1c",
         "type": "csv",
-        "z": "9206241c.eddcf8",
+        "z": "5f0a38f5.9453d8",
         "name": "read",
         "sep": ",",
         "hdrin": true,
@@ -858,8 +858,131 @@
         "y": 260,
         "wires": [
             [
-                "9a487c7e.deb57"
+                "71bdf7be.065a18"
             ]
+        ]
+    },
+    {
+        "id": "ce842e1c.23db5",
+        "type": "file",
+        "z": "5f0a38f5.9453d8",
+        "name": "writeToSparkCsv",
+        "filename": "",
+        "appendNewline": false,
+        "createDir": true,
+        "overwriteFile": "true",
+        "encoding": "none",
+        "x": 950,
+        "y": 1120,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "2278c27a.d65afe",
+        "type": "function",
+        "z": "5f0a38f5.9453d8",
+        "name": "prepareNewCsvLine",
+        "func": "const oldLines = msg.payload;\n\nconst allCsvRows = [];\n// const columnHeaders = \"date,nationality,age\";\n// allCsvRows.push(columnHeaders);\n\nconst today = new Date().toISOString().split('T')[0];\n// Since I am appending\nconst yesterday = new Date();\nyesterday.setDate(today.getDate() - 1);\nconst yesterdayISO = yesterday.toISOString().split('T')[0];\n\n\nfor (let i = 0; i < oldLines.length; i++) {\n    \n    const { groupID, listOfPeople, nationality, age, dateJoined, dateEnded, lifetime, currentCardinality, minCardinality, maxCardinality, averageCardinality, nChangeCardinality } = oldLines[i];\n        const listOfNationality = nationality ? nationality.split(',') : [];\n    const listOfAge = age ? age.split(',') : [];\n    \n    for (let j = 0; j < listOfNationality.length; j++) {\n        \n        // Skip line if empty line\n        if (!listOfNationality[j] || !listOfAge[j]) {\n            continue;\n        }\n        \n        // If the group has finished it's existence the previous day, skip\n        // In this way the csv only has TODAYS partecipants\n        if (dateEnded && dateEnded > yesterday) {\n            continue;\n        }\n        \n        const newRow = `${today},${listOfNationality[j]},${listOfAge[j]}`;\n\n        allCsvRows.push(newRow);\n    }\n}\n\n// Pass all CSV rows to the next node\nmsg.payload = allCsvRows.join('\\n');\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 660,
+        "y": 1260,
+        "wires": [
+            [
+                "65c149a5.054f48",
+                "59dae995.d02e18"
+            ]
+        ]
+    },
+    {
+        "id": "b4f4507b.661f8",
+        "type": "csv",
+        "z": "5f0a38f5.9453d8",
+        "name": "read",
+        "sep": ",",
+        "hdrin": true,
+        "hdrout": "",
+        "multi": "mult",
+        "ret": "\\n",
+        "temp": "groupID,teamLeader,listOfPeople,nationality,age,dateJoined,dateEnded,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality",
+        "skip": "0",
+        "strings": false,
+        "x": 450,
+        "y": 1260,
+        "wires": [
+            [
+                "2278c27a.d65afe"
+            ]
+        ]
+    },
+    {
+        "id": "93c9d6cc.05ef68",
+        "type": "inject",
+        "z": "5f0a38f5.9453d8",
+        "name": "24hours",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "86400",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 120,
+        "y": 1260,
+        "wires": [
+            [
+                "fd10f585.3617d8"
+            ]
+        ]
+    },
+    {
+        "id": "fd10f585.3617d8",
+        "type": "file in",
+        "z": "5f0a38f5.9453d8",
+        "name": "Read Groups",
+        "filename": "/data/output.csv",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "x": 290,
+        "y": 1260,
+        "wires": [
+            [
+                "b4f4507b.661f8"
+            ]
+        ]
+    },
+    {
+        "id": "65c149a5.054f48",
+        "type": "debug",
+        "z": "5f0a38f5.9453d8",
+        "name": "print",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 870,
+        "y": 1240,
+        "wires": []
+    },
+    {
+        "id": "59dae995.d02e18",
+        "type": "file",
+        "z": "5f0a38f5.9453d8",
+        "name": "writeToCsv",
+        "filename": "/data/to_spark.csv",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 890,
+        "y": 1280,
+        "wires": [
+            []
         ]
     }
 ]
