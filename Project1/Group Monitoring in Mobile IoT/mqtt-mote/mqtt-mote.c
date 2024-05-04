@@ -17,6 +17,7 @@
 
 #include "net/routing/routing.h"
 #include "net/netstack.h"
+#include "net/link-stats.h"
 #include "net/ipv6/simple-udp.h"
 
 #include "sys/log.h"
@@ -28,7 +29,6 @@
 /* MQTT PROCESS parameters */
 #define MQTT_BROKER_IP_ADDR         "fd00::1"
 #define MQTT_REGISTER_TOPIC         "nsds2023/register"
-#define MQTT_SEARCH_TOPIC           "nsds2023/search"
 #define MQTT_CREATE_TOPIC           "nsds2023/createGroup"
 #define MQTT_ADD_TOPIC              "nsds2023/addMember"
 #define MQTT_REMOVE_TOPIC           "nsds2023/removeMember"
@@ -58,7 +58,6 @@ static uint8_t state;
 #define STATE_CONNECTED       3
 #define STATE_PUBLISHING      4
 #define STATE_DISCONNECTED    5
-#define STATE_NEWCONFIG       6
 #define STATE_CONFIG_ERROR 0xFE
 #define STATE_ERROR        0xFF
 /*---------------------------------------------------------------------------*/
@@ -88,7 +87,6 @@ static uint8_t state;
 #define ADDRESS_SIZE 32
 static char client_id[BUFFER_SIZE];
 static char register_topic[BUFFER_SIZE];
-static char search_topic[BUFFER_SIZE];
 static char create_topic[BUFFER_SIZE];
 static char add_topic[BUFFER_SIZE];
 static char remove_topic[BUFFER_SIZE];
@@ -143,12 +141,7 @@ static int group_cardinality;
 static uint8_t group_state;
 #define STATE_REGISTER        0
 #define STATE_SEARCHING       1
-#define STATE_JOINING         2
-#define STATE_LEADER          3
-#define STATE_MEMBER          4
-#define STATE_LEAVING         5
-#define STATE_CREATING        6
-#define STATE_DELETING        7
+#define STATE_LEADER          2
 /*---------------------------------------------------------------------------*/
 /* This function adds an address to the list */
 static list_ipaddr_t add_to_list(char* addr, list_ipaddr_t l) {
@@ -199,6 +192,7 @@ static void deleteElement(list_ipaddr_t l, char* addr) {
 }
 /*---------------------------------------------------------------------------*/
 /* This function free a list */
+/*
 static void free_list(list_ipaddr_t l) {   
     list_ipaddr_t current = l;
     list_ipaddr_t next;
@@ -208,6 +202,7 @@ static void free_list(list_ipaddr_t l) {
       current = next;
     }
 }
+*/
 /*---------------------------------------------------------------------------*/
 /* This function returns a string containing the IP address (in the form 20x:x:x:x) */
 static char addr_buffer[ADDRESS_SIZE];
@@ -223,44 +218,6 @@ static char* get_ipaddr(const uip_ipaddr_t *ipaddr) {
 PROCESS(mqtt_client_process, "MQTT Client PROCESS");
 PROCESS(group_process, "Group PROCESS");
 AUTOSTART_PROCESSES(&mqtt_client_process, &group_process);
-/*---------------------------------------------------------------------------*/
-/* Unsubscribes to a specific topic */
-static void unsubscribe(char* topic) 
-{
-  mqtt_status_t status;
-  static char unsub_topic[BUFFER_SIZE];
-
-  // Unsubscribe to nsds2023/search
-  if(strcmp(topic, MQTT_SEARCH_TOPIC) == 0) {
-    strcpy(unsub_topic, search_topic);
-  }
-  
-  LOG_INFO("Unsubscribing to topic %s...\n", unsub_topic);
-  status = mqtt_unsubscribe(&conn, NULL, unsub_topic);
-
-  if (status != MQTT_STATUS_OK) {
-    LOG_ERR("Failed to unsubscribe!\n");
-  }
-}
-/*---------------------------------------------------------------------------*/
-/* Subscribes to a specific topic */
-static void subscribe(char* topic)
-{
-    mqtt_status_t status;
-    static char sub_topic[BUFFER_SIZE];
-
-    // Subscribe to nsds2023/search
-    if(strcmp(topic, MQTT_SEARCH_TOPIC) == 0) {
-      strcpy(sub_topic, search_topic);
-    }
-
-    LOG_INFO("Subscribing to topic %s...\n", sub_topic);
-    status = mqtt_subscribe(&conn, NULL, sub_topic, MQTT_QOS_LEVEL_0);
-  
-    if (status != MQTT_STATUS_OK) {
-      LOG_ERR("Failed to subscribe!\n");
-    }
-}
 /*---------------------------------------------------------------------------*/
 /* Publish on a specific topic */
 static void publish(char* topic)
@@ -283,40 +240,6 @@ static void publish(char* topic)
       }
       remaining -= len;
       buf_ptr += len;
-    }
-
-    // Publish on nsds2023/search
-    if(strcmp(topic, MQTT_SEARCH_TOPIC) == 0) {
-      strcpy(pub_topic, search_topic);
-      
-      static uip_ds6_nbr_t *nbr;
-      int len;
-      int remaining = APP_BUFFER_SIZE;
-      buf_ptr = app_buffer;
-
-      // Write: <my_ipaddr> <neighors_ipaddrs>
-      char *my_addr = get_ipaddr(rpl_get_global_address());
-      len = snprintf(buf_ptr, remaining, "%s ", my_addr);
-      if(len < 0 || len >= remaining) {
-          LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", remaining, len);
-          return;
-      }
-      remaining -= len;
-      buf_ptr += len;
-
-      // For each neighbor
-      for(nbr = nbr_table_head(ds6_neighbors); nbr != NULL; nbr = nbr_table_next(ds6_neighbors, nbr)) {
-        char *addr = get_ipaddr(&(nbr->ipaddr));
-
-        len = snprintf(buf_ptr, remaining, "%s ", addr);
-        if(len < 0 || len >= remaining) {
-            LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", remaining, len);
-            return;
-        }
-
-        remaining -= len;
-        buf_ptr += len;
-      }
     }
 
     // Publish on nsds2023/createGroup or nsds2023/addMember or nsds2023/removeMember
@@ -369,128 +292,6 @@ static void publish(char* topic)
     LOG_INFO("Publishing on topic %s...\n", pub_topic);
 }
 /*---------------------------------------------------------------------------*/
-/* This function handles the publish received on a topic */
-static void pub_handler(char *topic, uint8_t *payload, uint16_t chunk_len)
-{
-  // If topic = nsds2023/search
-  if(strcmp(topic, search_topic) == 0) {
-
-    static char sender_ipaddr[ADDRESS_SIZE];
-    list_ipaddr_t contacts = NULL;
-    static uip_ds6_nbr_t *nbr;
-
-    // First address is sender's IP address
-    char* addr = strtok((char*)payload, " ");
-    strcpy(sender_ipaddr, addr);
-
-    // Discard if I'm the sender
-    if (strcmp(sender_ipaddr, get_ipaddr(rpl_get_global_address())) == 0)
-      return;
-
-    // Discard if sender isn't a neighbor of mine
-    bool neighbor = false;
-    for(nbr = nbr_table_head(ds6_neighbors); nbr != NULL; nbr = nbr_table_next(ds6_neighbors, nbr)) {
-      if (strcmp(sender_ipaddr, get_ipaddr(&(nbr->ipaddr))) == 0) {
-        neighbor = true;
-        break;
-      }  
-    }
-    if (!neighbor)
-      return;
-
-    // Create a list with the contacts address of the sender
-    addr = strtok(NULL, " ");
-    while (addr != NULL) {
-      contacts = add_to_list(addr, contacts);
-      addr = strtok(NULL, " ");
-    }
-
-    // If I'm still searching for a group
-    if(group_state == STATE_SEARCHING) {
-      static list_ipaddr_t common = NULL;
-
-      // RPL root
-      uip_ipaddr_t root;
-      NETSTACK_ROUTING.get_root_ipaddr(&root);
-      static char root_ipaddr[ADDRESS_SIZE];
-      strcpy(root_ipaddr, get_ipaddr(&root));
-
-      // For each of my neighbors, see if it's in contact with the sender (find common contacts)
-      for(nbr = nbr_table_head(ds6_neighbors); nbr != NULL; nbr = nbr_table_next(ds6_neighbors, nbr)) {
-        if (contains(contacts, get_ipaddr(&(nbr->ipaddr))) && strcmp(get_ipaddr(&(nbr->ipaddr)), root_ipaddr) != 0) {    // exclude RPL root
-          common = add_to_list(get_ipaddr(&(nbr->ipaddr)), common);
-        }
-      }
-
-      // If there is at least one common contact, a group is formed (me, sender and the common contacts)
-      if (common != NULL) {
-        group = common;
-
-        // Add me and the sender to the group
-        group = add_to_list(sender_ipaddr, group);
-        group = add_to_list(get_ipaddr(rpl_get_global_address()), group);
-
-        // Find the leader of the group (highest IP)
-        static char leader[ADDRESS_SIZE];
-        int max = 0;
-        list_ipaddr_t temp;
-        temp = group;
-        while (temp != NULL) {
-            static char addr[ADDRESS_SIZE];
-            strcpy(addr, temp->ipaddr);
-            int id = (int)strtol(strtok(addr, ":"), NULL, 16);
-            if (id > max) {
-              max = id;
-              strcpy(leader, temp->ipaddr);
-            }
-            temp = temp->next;
-        }
-
-        // If I'm the leader, publish on nsds2023/createGroup and notify all the members
-        if(strcmp(leader, get_ipaddr(rpl_get_global_address())) == 0) {
-          // Set the leader and stop searching
-          leader_ipaddr = *rpl_get_global_address();
-          group_state = STATE_CREATING;
-        }
-        else {
-          // I'm not the leader, wait for creation message sent by the leader
-          free_list(group);
-        }
-      }
-      free_list(contacts);
-      return;
-    }
-    
-    // If I'm the leader of my group, check if the sender can join my group
-    if(group_state == STATE_LEADER){
-      
-      // To join my group the sender has to be in contact with at least all the members of the group
-      list_ipaddr_t temp;
-      temp = group;
-      while (temp != NULL) {
-        if(!contains(contacts, temp->ipaddr))
-          return;
-        temp = temp->next;
-      }
-
-      // Add member to my group
-      group = add_to_list(sender_ipaddr, group);
-      publish(MQTT_ADD_TOPIC);
-
-      // Inform the member
-      for(nbr = nbr_table_head(ds6_neighbors); nbr != NULL; nbr = nbr_table_next(ds6_neighbors, nbr)) {
-        if(strcmp(sender_ipaddr, get_ipaddr(&nbr->ipaddr)) == 0) {
-          uint8_t new_state = STATE_JOINING;
-          simple_udp_sendto(&udp_conn, &new_state, sizeof(new_state), &(nbr->ipaddr));
-        }
-      }
-      free_list(contacts);
-      return;
-    }
-  }
-
-}
-/*---------------------------------------------------------------------------*/
 /* This function is triggered whenever an event occurs on the MQTT device */
 static void mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
 {
@@ -514,7 +315,6 @@ static void mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data
     if(msg_ptr->first_chunk) {
       msg_ptr->first_chunk = 0;
       LOG_INFO("Application received a publish on topic '%s'\n", msg_ptr->topic);
-      pub_handler(msg_ptr->topic, msg_ptr->payload_chunk, msg_ptr->payload_length);
     }
     break;
   }
@@ -570,15 +370,6 @@ static int construct_topics(void)
     buf_ptr = remove_topic;
 
     len = snprintf(buf_ptr, BUFFER_SIZE, MQTT_REMOVE_TOPIC);
-    if(len < 0 || len >= BUFFER_SIZE) {
-        LOG_ERR("Topic: %d, buffer %d\n", len, BUFFER_SIZE);
-        return 0;
-    }
-
-    // Create the topic: nsds2023/search
-    buf_ptr = search_topic;
-
-    len = snprintf(buf_ptr, BUFFER_SIZE, MQTT_SEARCH_TOPIC);
     if(len < 0 || len >= BUFFER_SIZE) {
         LOG_ERR("Topic: %d, buffer %d\n", len, BUFFER_SIZE);
         return 0;
@@ -702,7 +493,6 @@ static void state_machine(void)
 
         if(state == STATE_CONNECTED) {
           LOG_INFO("Ready to publish!\n");
-          group_state = STATE_REGISTER;
           state = STATE_PUBLISHING;
         }
       } else {
@@ -720,8 +510,6 @@ static void state_machine(void)
         interval = connect_attempt < 3 ? RECONNECT_INTERVAL << connect_attempt : RECONNECT_INTERVAL << 3;
 
         LOG_INFO("Disconnected: attempt %u in %lu ticks\n", connect_attempt, interval);
-
-        group = NULL;
         etimer_set(&publish_periodic_timer, interval);
 
         state = STATE_REGISTERED;
@@ -781,25 +569,119 @@ static void udp_rx_callback(struct simple_udp_connection *c,
          const uint8_t *data,
          uint16_t datalen) {
       
-      uint8_t new_state = *(uint8_t*)data;
-      switch(new_state) {
+        // Manage a list of contacts received by a neighbor
+        list_ipaddr_t contacts = NULL;
+        static uip_ds6_nbr_t *nbr;
 
-      case STATE_JOINING: {
-        // Set the leader and stop searching
-        leader_ipaddr = *sender_addr;
-        group_state = new_state;
-        break;
+        // Create a list with the contacts address of the sender
+        char* addr = strtok((char*) data, " ");
+        while (addr != NULL) {
+          contacts = add_to_list(addr, contacts);
+          addr = strtok(NULL, " ");
+        }
+
+        // If I'm still searching for a group
+        if(group_state == STATE_SEARCHING) {
+          static list_ipaddr_t common = NULL;
+
+          // RPL root
+          uip_ipaddr_t root;
+          NETSTACK_ROUTING.get_root_ipaddr(&root);
+          static char root_ipaddr[ADDRESS_SIZE];
+          strcpy(root_ipaddr, get_ipaddr(&root));
+
+          // For each of my neighbors, see if it's in contact with the sender (find common contacts)
+          for(nbr = nbr_table_head(ds6_neighbors); nbr != NULL; nbr = nbr_table_next(ds6_neighbors, nbr)) {
+            if (contains(contacts, get_ipaddr(&(nbr->ipaddr))) && strcmp(get_ipaddr(&(nbr->ipaddr)), root_ipaddr) != 0) {    // exclude RPL root
+              common = add_to_list(get_ipaddr(&(nbr->ipaddr)), common);
+            }
+          }
+
+          // If there is at least one common contact, a group is formed (me, sender and the common contacts)
+          if (common != NULL) {
+            group = common;
+
+            // Add me and the sender to the group
+            group = add_to_list(get_ipaddr(sender_addr), group);
+            group = add_to_list(get_ipaddr(rpl_get_global_address()), group);
+
+            // Find the leader of the group (highest IP)
+            static char leader[ADDRESS_SIZE];
+            int max = 0;
+            list_ipaddr_t temp;
+            temp = group;
+            while (temp != NULL) {
+                static char addr[ADDRESS_SIZE];
+                strcpy(addr, temp->ipaddr);
+                int id = (int)strtol(strtok(addr, ":"), NULL, 16);
+                if (id > max) {
+                  max = id;
+                  strcpy(leader, temp->ipaddr);
+                }
+                temp = temp->next;
+            }
+
+            // If I'm the leader, publish on nsds2023/createGroup and notify all the members
+            if(strcmp(leader, get_ipaddr(rpl_get_global_address())) == 0) {
+              // Set the leader and stop searching
+              leader_ipaddr = *rpl_get_global_address();
+              LOG_INFO("Creating the group...\n");
+              publish(MQTT_CREATE_TOPIC);
+              group_state = STATE_LEADER;
+            }
+            else {
+              // I'm not the leader, wait for creation message sent by the leader
+              //free_list(group);
+            }
+          }
+          //free_list(contacts);
+        }
+        
+        // If I'm the leader of my group, check if the sender can join my group
+        if(group_state == STATE_LEADER){
+          
+          // To join my group the sender has to be in contact with at least all the members of the group
+          list_ipaddr_t temp;
+          temp = group;
+          while (temp != NULL) {
+            if(!contains(contacts, temp->ipaddr))
+              return;
+            temp = temp->next;
+          }
+
+          // Add member to my group
+          group = add_to_list(get_ipaddr(sender_addr), group);
+          publish(MQTT_ADD_TOPIC);
+          
+          //free_list(contacts);
+          return;
+        }
+}
+/*---------------------------------------------------------------------------*/
+/* Function to send my contacts to my neighbors */
+static void sendMyContacts() {
+    static uip_ds6_nbr_t *nbr;
+    int len;
+    int remaining = APP_BUFFER_SIZE;
+    buf_ptr = app_buffer;
+
+    // Write in the buffer a list of my contacts' IP address (separated by comma)
+    for(nbr = nbr_table_head(ds6_neighbors); nbr != NULL; nbr = nbr_table_next(ds6_neighbors, nbr)) {
+      char *addr = get_ipaddr(&(nbr->ipaddr));
+
+      len = snprintf(buf_ptr, remaining, "%s ", addr);
+      if(len < 0 || len >= remaining) {
+          LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", remaining, len);
+          return;
       }
 
-      case STATE_LEAVING: {
-        // Remove member from group
-        LOG_INFO("Removing member...\n");
-        publish(MQTT_REMOVE_TOPIC);
-        deleteElement(group, get_ipaddr(sender_addr));
-        if (group_cardinality < 3)
-          LOG_INFO("Deleting group...\n");
-        break;
-      }
+      remaining -= len;
+      buf_ptr += len;
+    }
+
+    // Send to all my neighbors the list of my contacts through UDP
+    for(nbr = nbr_table_head(ds6_neighbors); nbr != NULL; nbr = nbr_table_next(ds6_neighbors, nbr)) {
+      simple_udp_sendto(&udp_conn, &app_buffer, strlen(app_buffer) + 1, &(nbr->ipaddr));
     }
 }
 /*---------------------------------------------------------------------------*/
@@ -826,90 +708,60 @@ PROCESS_THREAD(group_process, ev, data){
         // Wait until periodic timer expires
         PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
 
-        // If MQTT client is connected to MQTT broker
-        if (connected_to_broker){
+        // If MQTT client is connected to MQTT broker and ROOT is reachable
+        if (connected_to_broker && NETSTACK_ROUTING.node_is_reachable()){
           
           // Initially I must send nationality and age to the back-end
           if (group_state == STATE_REGISTER) {
             LOG_INFO("Register to back-end...\n");
             publish(MQTT_REGISTER_TOPIC);
-
-            // Add some delay to avoid MQTT_STATUS_OUT_QUEUE_FULL
-            etimer_set(&periodic_timer, 5 * (CLOCK_SECOND));
-            PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
-
-            subscribe(MQTT_SEARCH_TOPIC);
             group_state = STATE_SEARCHING;
           }
 
-          // If I'm searching for a group, publish my neighbors on search topic 
+          // If I'm searching for a group, send the list of my contacts to my neighbors
           else if (group_state == STATE_SEARCHING) {
-            LOG_INFO("Searching for a group...\n");
-            publish(MQTT_SEARCH_TOPIC);
+            sendMyContacts();
           }
 
-          // If I'm the leader, publish a createGroup topic and inform all the members
-          else if (group_state == STATE_CREATING) {
-            LOG_INFO("Creating the group...\n");
-            publish(MQTT_CREATE_TOPIC);
-            for(nbr = nbr_table_head(ds6_neighbors); nbr != NULL; nbr = nbr_table_next(ds6_neighbors, nbr)) {
-              if(contains(group, get_ipaddr(&(nbr->ipaddr)))) {
-                uint8_t new_state = STATE_JOINING;
-                simple_udp_sendto(&udp_conn, &new_state, sizeof(new_state), &(nbr->ipaddr));
-              }
-            }
-            group_state = STATE_LEADER;
-          }
-
-          // If I'm the leader, check if the members are still in contact with me
+          // If I'm the leader, check if members are still in contact with me
           else if (group_state == STATE_LEADER) {
-            
-          }
-
-          // If I'm a member of the group, check if I'm still in contact with the leader
-          else if (group_state == STATE_MEMBER) {
-            bool leaving = true;
-            for(nbr = nbr_table_head(ds6_neighbors); nbr != NULL; nbr = nbr_table_next(ds6_neighbors, nbr)) {
-              if(strcmp(get_ipaddr(&leader_ipaddr), get_ipaddr(&(nbr->ipaddr))) == 0) {
-                leaving = false;
-                break;
+            list_ipaddr_t temp;
+            temp = group;
+            while (temp != NULL) {
+              bool found = false;
+              for(nbr = nbr_table_head(ds6_neighbors); nbr != NULL; nbr = nbr_table_next(ds6_neighbors, nbr)) {
+                if(strcmp(temp->ipaddr, get_ipaddr(&(nbr->ipaddr))) == 0) {
+                  found = true;
+                  break;
+                }
               }
+              if (!found && strcmp(temp->ipaddr, get_ipaddr(rpl_get_global_address())) != 0) {
+                // Remove from the group
+                LOG_INFO("Member %s left the group\n", temp->ipaddr);
+                deleteElement(group, temp->ipaddr);
+                publish(MQTT_REMOVE_TOPIC);
+              }
+              temp = temp->next;
             }
-            if (leaving)
-              group_state = STATE_LEAVING;
+        
+            if (group_cardinality < 3) {
+              LOG_INFO("Deleting group...\n");
+              group = NULL;
+              group_state = STATE_SEARCHING;
+            }
           }
 
-          // If I'm joining a group, I have to stop searching
-          else if (group_state == STATE_JOINING) {
-            LOG_INFO("Joining a group!\n");
-
-            // Unsubscribe nsds2023/search
-            unsubscribe(MQTT_SEARCH_TOPIC);
-            group_state = STATE_MEMBER;
-          }
-
-          // If I'm leaving a group, I have to inform the leader and start searching again
-          else if (group_state == STATE_LEAVING) {
-            LOG_INFO("Leaving the group...\n");
-
-            // Inform the leader
-            uint8_t new_state = STATE_LEAVING;
-            simple_udp_sendto(&udp_conn, &new_state, sizeof(new_state), &leader_ipaddr);         
-            
-            // Start to search for a new group
-            subscribe(MQTT_SEARCH_TOPIC);
-            group_state = STATE_SEARCHING;
-          }
-
-          // If I'm deleting my group, I have to inform the members and start searching again
-          else if (group_state == STATE_DELETING) {
-            // il leader torna in stato di ricerca, avvisa il backend e avvisa i membri rimasti (tramite UDP) che il gruppo non esiste più
-          }
         }
 
         // Refresh neighbor table
-        for(nbr = nbr_table_head(ds6_neighbors); nbr != NULL; nbr = nbr_table_next(ds6_neighbors, nbr)) {
-          uip_ds6_nbr_rm(nbr);
+        for(rpl_nbr_t *nbr = nbr_table_head(rpl_neighbors); nbr != NULL; nbr = nbr_table_next(rpl_neighbors, nbr)) {
+          const struct link_stats *stats = rpl_neighbor_get_link_stats(nbr);
+          clock_time_t clock_now = clock_time();
+          if (stats != NULL && stats->last_tx_time > 0) {
+            unsigned elapsed_time = (unsigned) ((clock_now - stats->last_tx_time) / (60 * CLOCK_SECOND));
+            if (elapsed_time > 2)
+              uip_ds6_nbr_rm(uip_ds6_nbr_lookup(rpl_neighbor_get_ipaddr(nbr)));
+          }
         }
 
         // Add some jitter (+- 5 seconds)
