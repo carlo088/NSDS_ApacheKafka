@@ -160,22 +160,32 @@ For the environment dataset:
 `echo "date,nationality,age" > to_spark.csv`
 
 Complete command:
-`docker exec -it ca7bfbf5c7e4  /bin/bash -c "cd /data && rm output.csv && echo 'groupID,teamLeader,listOfPeople,nationality,age,dateJoined,dateEnded,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality' > output.csv && echo "dateJoined, IP,nationality,age" > environment.csv"`
+`docker exec -it ca7bfbf5c7e4  /bin/bash -c "cd /data && rm output.csv && echo 'groupID,teamLeader,listOfPeople,nationality,age,dateJoined,dateEnded,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality' > output.csv && echo "dateJoined,IP,nationality,age" > environment.csv"`
 
 
 ### Running Spark in a distributed environment:
 
 `export SPARK_MASTER_HOST=127.0.0.1`
+`export SPARK_LOCAL_HOST=127.0.0.1`
 
 If first time running, go to where spark is installed, in my case: `/Users/Carlo/Documents/spark-3.3.0-bin-hadoop2` and cd into `conf`.
 
 Then execute: `cp spark-defaults.conf.template spark-defaults.conf`.
 
+Added `SPARK_MASTER_HOST=127.0.0.1` to `conf/spark-env.sh`
+
 Make sure that spark-defaults.conf has the following lines uncommented `spark.eventLog.enabled` and `spark.eventLog.dir`
 
 To start master: `./sbin/start-master.sh`
 
-To start one worker: `./sbin/start-worker.sh spark://127.0.0.1:7007`
+To start one worker: `./sbin/start-worker.sh spark://127.0.0.1:7077`
+
+To start one worker: `./sbin/start-worker.sh spark://localhost:7077`
+
+To start one worker: `./bin/spark-class org.apache.spark.deploy.worker.Worker  spark://localhost:7077 -c 1 -m 512M` -> access UI at: http://127.0.0.1:8082/
+
+
+To stop one worker: `./sbin/stop-worker.sh spark://127.0.0.1:7007`
 
 To start visualization tool: `./sbin/start-history-server.sh`
 
@@ -183,10 +193,8 @@ Access UI at `http://127.0.0.1:8080/`, one should see 1 worker ready.
 
 Going pack to code repo, run `mvn package` which creates a `.jar` file inside the `target` folder.
 
-<!--Lastly, run: `./bin/spark-submit --class it.polimi.middleware.spark.batch.wordcount.WordCount /Users/Carlo/Desktop/POLITECNICO/NSDS/Lectures/apache_spark/NSDS_spark_tutorial/target/spark_tutorial-1.0.jar spark://127.0.0.1:7007 ~/Users/Carlo/Desktop/POLITECNICO/NSDS/Lectures/apache_spark/NSDS_spark_tutorial/`-->
+<!--Lastly, run: `./bin/spark-submit --class it.polimi.middleware.spark.batch.wordcount.WordCount /Users/Carlo/Desktop/POLITECNICO/NSDS/Lectures/apache_spark/NSDS_spark_tutorial/target/spark_tutorial-1.0.jar spark://127.0.0.1:7077 ~/Users/Carlo/Desktop/POLITECNICO/NSDS/Lectures/apache_spark/NSDS_spark_tutorial/`-->
 
-Lastly, run: `./bin/spark-submit --class it.polimi.middleware.spark/Users/Carlo/Desktop/POLITECNICO/NSDS/NSDS_Projects_2024/Project1/target/SparkAnalysis-1.0.jar spark://127.0.0.1:7007 ~/Users/Carlo/Desktop/POLITECNICO/NSDS/NSDS_Projects_2024/Project1/`
-
-Currently not working: `WARN StandaloneAppClient$ClientEndpoint: Failed to connect to master 127.0.0.1:7007`
+Lastly, run: `./bin/spark-submit --class it.polimi.middleware.spark/Users/Carlo/Desktop/POLITECNICO/NSDS/NSDS_Projects_2024/Project1/target/SparkAnalysis-1.0.jar spark://127.0.0.1:7077 ~/Users/Carlo/Desktop/POLITECNICO/NSDS/NSDS_Projects_2024/Project1/`
 
 Even though everything says that the master is up and running: `jps` and also `nano logs/spark-Carlo-org.apache.spark.deploy.master.Master-1-MacBook-Air-di-Carlo.local.out` has outputs shuch as *I have been elected leader! New state: ALIVE: Confirms that the Spark Master has been elected as the leader and is in the ALIVE state, indicating that it's operational.*
