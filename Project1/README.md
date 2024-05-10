@@ -86,67 +86,6 @@ The optional task of the project requested that the back-end should also compute
 2. Calculate the percentage increase (with respect to the day before) of the 7-day moving average for each nationality.
 3. Determine the top nationalities with the highest percentage increase of the seven days moving average for each day.
 
-To tackle this task, we decided to use a technology known as Apache Spark, and in particular the Spark SQL engine. This engine was choosen as all three requests could be translated in a SQL query to be executed on the output dataset of the NodeRed flows. As pointed out earlier, the backend (i.e. NodeRed) saves the output of the flows on the `output.csv` file, which is therefore the file on top of which the SQL queries will be executed.
-
-The first step of the Spark engine is to import the `output.csv` file and create a dataset: `dataSpark`, which contains all the information that one needs for the three queries.
-
-**Query 1**:
-This query is divided into two steps. First of all, the data is filtered such that only the groups that were created in the past 7 days (with respect to "today") are retained. The second query instead computes the "moving average" of the partecipants in the retained groups, by nationality. This second query also adds a `StartDate` and `EndDate` column to highlight the window in which the average was computed.
-
-    Dataset<Row> filteredGroups = dataSpark
-                        .filter(expr("dateJoined >= date_sub('" + date + "', 6)"))
-                        .filter(expr("dateJoined <= '" + date + "'"));
-      
-
-    Dataset<Row> movingAverage = filteredGroups
-                            .groupBy("Nationality")
-                            .agg(round(avg("Age"), 2).as("movingAverage"))
-                            .withColumn("StartDate", lit(date))
-                            .withColumn("EndDate", lit(java.time.LocalDate.parse(date).minusDays(6).toString()))
-                            .orderBy("Nationality");
-
-**Query 2**:
-This query is subdivided into three steps.
-
-1. In a fashion similar to Query 1, filter the groups that joined in past 7 days, but with respect to "yesterday" (and not "today", as in Query 1)
-2. Compute the moving average at the previous step
-3. Finally, by recollecting the moving average of Query 1, compute the percentage increase between the two moving averages.
-
-This executes the second query.
-
-	Dataset<Row> filteredGroupsDayBefore = dataSpark
-                .filter(expr("dateJoined >= date_sub('" + dayBefore + "', 6)"))
-                .filter(expr("dateJoined <= '" + dayBefore + "'"));
-        
-    Dataset<Row> movingAverageDayBefore = filteredGroupsDayBefore
-                .groupBy("Nationality")
-                .agg(round(avg("Age"), 2).as("movingAverageDayBefore")).orderBy("Nationality");
-        
-    Dataset<Row> percentageIncrease = movingAverageDayBefore
-                .join(movingAverage, "Nationality")
-                .withColumn("PercentageIncrease",
-                            round((col("movingAverage").divide(col("movingAverageDayBefore")).minus(1)).multiply(100), 2))
-                .withColumn("Date", lit(date))
-                .orderBy("Nationality")
-                .drop("StartDate", "EndDate");
-
-**Query 3**:
-For this query, a `WindowSpec` object is used to order the date by the percentage increase at Query 2, in descending order. Secondly, a SQL query extracts the top 1 nationality with the highest percentage increase, for each day.
-
-
-    WindowSpec windowSpec = Window.partitionBy("Date").orderBy(desc("PercentageIncrease"));
-
-    Dataset<Row> rankedNationalities = percentageIncrease
-                        .withColumn("rank", rank().over(windowSpec))
-                        .filter(col("rank").leq(1)) // Keep only top 1 nationalities
-                        .drop("rank")
-                        .select("Date", "Nationality", "PercentageIncrease")
-                        .orderBy(col("Date"), desc("PercentageIncrease"));
-
-Finally, the Spark engine also prints to console all of the results of the queries.
-
-
--
 
 #### Instructions when operating NodeRed in Docker
 
@@ -160,33 +99,41 @@ For the environment dataset:
 `echo "date,nationality,age" > to_spark.csv`
 
 Complete command:
-`docker exec -it ca7bfbf5c7e4  /bin/bash -c "cd /data && rm output.csv && echo 'groupID,teamLeader,listOfPeople,nationality,age,dateJoined,dateEnded,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality' > output.csv && echo "dateJoined, IP,nationality,age" > environment.csv"`
+`docker exec -it ca7bfbf5c7e4  /bin/bash -c "cd /data && rm output.csv && echo 'groupID,teamLeader,listOfPeople,nationality,age,dateJoined,dateEnded,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality' > output.csv && echo "dateJoined,IP,nationality,age" > environment.csv"`
 
 
 ### Running Spark in a distributed environment:
 
-`export SPARK_MASTER_HOST=127.0.0.1`
+`export SPARK_MASTER_HOST=127.0.0.1` or 172.20.10.12
+`export SPARK_LOCAL_HOST=127.0.0.1`
 
 If first time running, go to where spark is installed, in my case: `/Users/Carlo/Documents/spark-3.3.0-bin-hadoop2` and cd into `conf`.
 
 Then execute: `cp spark-defaults.conf.template spark-defaults.conf`.
 
-Make sure that spark-defaults.conf has the following lines uncommented `spark.eventLog.enabled` and `spark.eventLog.dir`
+Added `SPARK_MASTER_HOST=127.0.0.1` to `conf/spark-env.sh`
+
+Make sure that spark-defaults.conf has the following lines uncommented `spark.master`, `spark.eventLog.enabled` and `spark.eventLog.dir`
 
 To start master: `./sbin/start-master.sh`
 
-To start one worker: `./sbin/start-worker.sh spark://127.0.0.1:7007`
+To start one worker: `./sbin/start-worker.sh spark://127.0.0.1:7077`
+
+To start one worker: `./sbin/start-worker.sh spark://localhost:7077`
+
+To start one worker: `./bin/spark-class org.apache.spark.deploy.worker.Worker  spark://localhost:7077 -c 1 -m 512M` -> access UI at: http://127.0.0.1:8082/
+
+
+To stop one worker: `./sbin/stop-worker.sh spark://127.0.0.1:7007`
 
 To start visualization tool: `./sbin/start-history-server.sh`
 
-Access UI at `http://127.0.0.1:8080/`, one should see 1 worker ready.
+Access UI at `http://127.0.0.1:18080/`, one should see 1 worker ready.
 
 Going pack to code repo, run `mvn package` which creates a `.jar` file inside the `target` folder.
 
-<!--Lastly, run: `./bin/spark-submit --class it.polimi.middleware.spark.batch.wordcount.WordCount /Users/Carlo/Desktop/POLITECNICO/NSDS/Lectures/apache_spark/NSDS_spark_tutorial/target/spark_tutorial-1.0.jar spark://127.0.0.1:7007 ~/Users/Carlo/Desktop/POLITECNICO/NSDS/Lectures/apache_spark/NSDS_spark_tutorial/`-->
+<!--Lastly, run: `./bin/spark-submit --class it.polimi.middleware.spark.batch.wordcount.WordCount /Users/Carlo/Desktop/POLITECNICO/NSDS/Lectures/apache_spark/NSDS_spark_tutorial/target/spark_tutorial-1.0.jar spark://127.0.0.1:7077 ~/Users/Carlo/Desktop/POLITECNICO/NSDS/Lectures/apache_spark/NSDS_spark_tutorial/`-->
 
-Lastly, run: `./bin/spark-submit --class it.polimi.middleware.spark/Users/Carlo/Desktop/POLITECNICO/NSDS/NSDS_Projects_2024/Project1/target/SparkAnalysis-1.0.jar spark://127.0.0.1:7007 ~/Users/Carlo/Desktop/POLITECNICO/NSDS/NSDS_Projects_2024/Project1/`
-
-Currently not working: `WARN StandaloneAppClient$ClientEndpoint: Failed to connect to master 127.0.0.1:7007`
+Lastly, run: `./bin/spark-submit --class it.polimi.middleware.spark.SparkAnalysis /Users/Carlo/Desktop/POLITECNICO/NSDS/NSDS_Projects_2024/Project1/target/SparkAnalysis-1.0.jar spark://127.0.0.1:7077 /Users/Carlo/Desktop/POLITECNICO/NSDS/NSDS_Projects_2024/Project1/`
 
 Even though everything says that the master is up and running: `jps` and also `nano logs/spark-Carlo-org.apache.spark.deploy.master.Master-1-MacBook-Air-di-Carlo.local.out` has outputs shuch as *I have been elected leader! New state: ALIVE: Confirms that the Spark Master has been elected as the leader and is in the ALIVE state, indicating that it's operational.*
