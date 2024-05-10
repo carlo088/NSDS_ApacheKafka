@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.apache.spark.sql.functions.*;
+
 import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.expressions.WindowSpec;
 
@@ -109,7 +110,7 @@ public class SparkAnalysis {
                 .withColumn("percentageIncrease", round(col("percentageIncrease"), 2))
                 .drop("previous")
                 .drop("movingAverage")
-                .orderBy("date", "nationality");
+                .orderBy(desc("date"), col("nationality"));
         
         percentageIncrease.show();
 

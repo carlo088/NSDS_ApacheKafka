@@ -28,10 +28,9 @@
 /*---------------------------------------------------------------------------*/
 /* MQTT PROCESS parameters */
 #define MQTT_BROKER_IP_ADDR         "fd00::1"
-#define MQTT_REGISTER_TOPIC         "nsds2023/register"
+#define MQTT_REGISTER_TOPIC         "nsds2023/newEnvironmentPerson"
 #define MQTT_CREATE_TOPIC           "nsds2023/createGroup"
-#define MQTT_ADD_TOPIC              "nsds2023/addMember"
-#define MQTT_REMOVE_TOPIC           "nsds2023/removeMember"
+#define MQTT_CHANGE_TOPIC           "nsds2023/changeCardinality"
 /*---------------------------------------------------------------------------*/
 /* Publish to a local MQTT broker (e.g. mosquitto) running on the node that hosts your border router */
 static const char *broker_ip = MQTT_BROKER_IP_ADDR;
@@ -88,8 +87,7 @@ static uint8_t state;
 static char client_id[BUFFER_SIZE];
 static char register_topic[BUFFER_SIZE];
 static char create_topic[BUFFER_SIZE];
-static char add_topic[BUFFER_SIZE];
-static char remove_topic[BUFFER_SIZE];
+static char change_topic[BUFFER_SIZE];
 /*---------------------------------------------------------------------------*/
 /* The main MQTT buffer, used to store the strings published on a topic. We will need to increase if we start publishing more data. */
 #define APP_BUFFER_SIZE 512
@@ -224,7 +222,7 @@ static void publish(char* topic)
 {
     static char pub_topic[BUFFER_SIZE];
 
-    // Publish on nsds2023/register
+    // Publish on nsds2023/newEnvironmentPerson
     if(strcmp(topic, MQTT_REGISTER_TOPIC) == 0) {
       strcpy(pub_topic, register_topic);
 
@@ -242,8 +240,8 @@ static void publish(char* topic)
       buf_ptr += len;
     }
 
-    // Publish on nsds2023/createGroup or nsds2023/addMember or nsds2023/removeMember
-    if(strcmp(topic, MQTT_CREATE_TOPIC) == 0 || strcmp(topic, MQTT_ADD_TOPIC) == 0 || strcmp(topic, MQTT_REMOVE_TOPIC) == 0) {
+    // Publish on nsds2023/createGroup or nsds2023/changeCardinality
+    if(strcmp(topic, MQTT_CREATE_TOPIC) == 0 || strcmp(topic, MQTT_CHANGE_TOPIC) == 0) {
       strcpy(pub_topic, topic);
 
       int len;
@@ -339,7 +337,7 @@ static void mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data
 /* Creates the main topics of the mote */
 static int construct_topics(void)
 {
-    // Create the topic: nsds2023/register
+    // Create the topic: nsds2023/newEnvironmentPerson
     buf_ptr = register_topic;
 
     int len = snprintf(buf_ptr, BUFFER_SIZE, MQTT_REGISTER_TOPIC);
@@ -357,19 +355,10 @@ static int construct_topics(void)
         return 0;
     }
 
-    // Create the topic: nsds2023/addMember
-    buf_ptr = add_topic;
+    // Create the topic: nsds2023/changeCardinality
+    buf_ptr = change_topic;
 
-    len = snprintf(buf_ptr, BUFFER_SIZE, MQTT_ADD_TOPIC);
-    if(len < 0 || len >= BUFFER_SIZE) {
-        LOG_ERR("Topic: %d, buffer %d\n", len, BUFFER_SIZE);
-        return 0;
-    }
-
-    // Create the topic: nsds2023/removeMember
-    buf_ptr = remove_topic;
-
-    len = snprintf(buf_ptr, BUFFER_SIZE, MQTT_REMOVE_TOPIC);
+    len = snprintf(buf_ptr, BUFFER_SIZE, MQTT_CHANGE_TOPIC);
     if(len < 0 || len >= BUFFER_SIZE) {
         LOG_ERR("Topic: %d, buffer %d\n", len, BUFFER_SIZE);
         return 0;
@@ -651,11 +640,13 @@ static void udp_rx_callback(struct simple_udp_connection *c,
 
           // Add member to my group
           group = add_to_list(get_ipaddr(sender_addr), group);
-          publish(MQTT_ADD_TOPIC);
+          publish(MQTT_CHANGE_TOPIC);
           
           //free_list(contacts);
           return;
         }
+        
+        return;
 }
 /*---------------------------------------------------------------------------*/
 /* Function to send my contacts to my neighbors */
@@ -739,7 +730,7 @@ PROCESS_THREAD(group_process, ev, data){
                 // Remove from the group
                 LOG_INFO("Member %s left the group\n", temp->ipaddr);
                 deleteElement(group, temp->ipaddr);
-                publish(MQTT_REMOVE_TOPIC);
+                publish(MQTT_CHANGE_TOPIC);
               }
               temp = temp->next;
             }
