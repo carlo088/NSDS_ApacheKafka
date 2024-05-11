@@ -1,1 +1,4 @@
 *.DS_Store
+.vscode/
+Project1/.vscode/
+Project1/target/
