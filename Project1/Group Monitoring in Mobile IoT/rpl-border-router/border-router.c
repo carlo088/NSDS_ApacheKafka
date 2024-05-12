@@ -32,6 +32,10 @@
 
 #include "contiki.h"
 
+#include "net/routing/routing.h"
+#include "net/netstack.h"
+#include "net/ipv6/simple-udp.h"
+
 /* Log configuration */
 #include "sys/log.h"
 #define LOG_MODULE "RPL BR"
@@ -45,6 +49,9 @@ AUTOSTART_PROCESSES(&contiki_ng_br);
 PROCESS_THREAD(contiki_ng_br, ev, data)
 {
   PROCESS_BEGIN();
+
+  // Initialize DAG root
+  NETSTACK_ROUTING.root_start();
 
 #if BORDER_ROUTER_CONF_WEBSERVER
   PROCESS_NAME(webserver_nogui_process);

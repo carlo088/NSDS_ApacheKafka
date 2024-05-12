@@ -189,19 +189,6 @@ static void deleteElement(list_ipaddr_t l, char* addr) {
     free(temp);
 }
 /*---------------------------------------------------------------------------*/
-/* This function free a list */
-/*
-static void free_list(list_ipaddr_t l) {   
-    list_ipaddr_t current = l;
-    list_ipaddr_t next;
-    while (current != NULL) {
-      next = current->next;
-      free(current);
-      current = next;
-    }
-}
-*/
-/*---------------------------------------------------------------------------*/
 /* This function returns a string containing the IP address (in the form 20x:x:x:x) */
 static char addr_buffer[ADDRESS_SIZE];
 static char* get_ipaddr(const uip_ipaddr_t *ipaddr) {
@@ -571,7 +558,7 @@ static void udp_rx_callback(struct simple_udp_connection *c,
 
         // If I'm still searching for a group
         if(group_state == STATE_SEARCHING) {
-          static list_ipaddr_t common = NULL;
+          list_ipaddr_t common = NULL;
 
           // RPL root
           uip_ipaddr_t root;
@@ -620,10 +607,9 @@ static void udp_rx_callback(struct simple_udp_connection *c,
             }
             else {
               // I'm not the leader, wait for creation message sent by the leader
-              //free_list(group);
             }
           }
-          //free_list(contacts);
+          return;
         }
         
         // If I'm the leader of my group, check if the sender can join my group
@@ -641,39 +627,10 @@ static void udp_rx_callback(struct simple_udp_connection *c,
           // Add member to my group
           group = add_to_list(get_ipaddr(sender_addr), group);
           publish(MQTT_CHANGE_TOPIC);
-          
-          //free_list(contacts);
           return;
         }
         
         return;
-}
-/*---------------------------------------------------------------------------*/
-/* Function to send my contacts to my neighbors */
-static void sendMyContacts() {
-    static uip_ds6_nbr_t *nbr;
-    int len;
-    int remaining = APP_BUFFER_SIZE;
-    buf_ptr = app_buffer;
-
-    // Write in the buffer a list of my contacts' IP address (separated by comma)
-    for(nbr = nbr_table_head(ds6_neighbors); nbr != NULL; nbr = nbr_table_next(ds6_neighbors, nbr)) {
-      char *addr = get_ipaddr(&(nbr->ipaddr));
-
-      len = snprintf(buf_ptr, remaining, "%s ", addr);
-      if(len < 0 || len >= remaining) {
-          LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", remaining, len);
-          return;
-      }
-
-      remaining -= len;
-      buf_ptr += len;
-    }
-
-    // Send to all my neighbors the list of my contacts through UDP
-    for(nbr = nbr_table_head(ds6_neighbors); nbr != NULL; nbr = nbr_table_next(ds6_neighbors, nbr)) {
-      simple_udp_sendto(&udp_conn, &app_buffer, strlen(app_buffer) + 1, &(nbr->ipaddr));
-    }
 }
 /*---------------------------------------------------------------------------*/
 /* Group PROCESS */
@@ -711,7 +668,36 @@ PROCESS_THREAD(group_process, ev, data){
 
           // If I'm searching for a group, send the list of my contacts to my neighbors
           else if (group_state == STATE_SEARCHING) {
-            sendMyContacts();
+            int len;
+            int remaining = APP_BUFFER_SIZE;
+            static char neighbors[APP_BUFFER_SIZE];
+            buf_ptr = neighbors;
+
+            // Write in the buffer a list of my contacts' IP address (separated by comma)
+            for(nbr = nbr_table_head(ds6_neighbors); nbr != NULL; nbr = nbr_table_next(ds6_neighbors, nbr)) {
+              char *addr = get_ipaddr(&(nbr->ipaddr));
+
+              len = snprintf(buf_ptr, remaining, "%s ", addr);
+              if(len < 0 || len >= remaining) {
+                  LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", remaining, len);
+              }
+
+              remaining -= len;
+              buf_ptr += len;
+            }
+
+            // Send to all my neighbors the list of my contacts through UDP
+            for(nbr = nbr_table_head(ds6_neighbors); nbr != NULL; nbr = nbr_table_next(ds6_neighbors, nbr)) {
+              
+              // To send to multiple hosts we need to introduce a small delay
+              etimer_set(&periodic_timer, CLOCK_SECOND);
+              PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
+
+              // Send a different pointer to avoid allocation corruption
+              char message[APP_BUFFER_SIZE];
+              strcpy(message, neighbors);
+              simple_udp_sendto(&udp_conn, &message, strlen(message) + 1, &(nbr->ipaddr));
+            }
           }
 
           // If I'm the leader, check if members are still in contact with me
