@@ -439,7 +439,7 @@ static void state_machine(void)
       /* _register() will set auto_reconnect; we don't want that */
       conn.auto_reconnect = 0;
       connect_attempt = 1;
-
+      
       state = STATE_REGISTERED;
       /* Continue (don't break the switch case) */
     case STATE_REGISTERED:
