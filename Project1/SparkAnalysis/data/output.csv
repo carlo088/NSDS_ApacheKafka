@@ -1,0 +1,4 @@
+groupID,teamLeader,listOfPeople,dateJoined,dateEnded,lifetime,currentCardinality,minCardinality,maxCardinality,averageCardinality,nChangeCardinality
+0,204:4:4:4,"204:4:4:4,203:3:3:3,202:2:2:2","2024-05-10T12:13:26.406Z","2024-05-10T12:28:30.724Z",904.318,0,2,3,2.50,2
+1,20a:a:a:a,"20a:a:a:a,208:8:8:8,209:9:9:9,207:7:7:7","2024-05-10T12:21:50.099Z","null",0,4,4,4,4,1
+2,206:6:6:6,"206:6:6:6,205:5:5:5,203:3:3:3,202:2:2:2","2024-05-10T12:26:43.977Z","null",85.065,4,3,4,3.50,2
